@@ -39,8 +39,12 @@ export function Unsorted() {
   useEffect(() => { load(); }, []);
 
   const validate = async (fileId: string, category: string) => {
-    await invoke('validate_unsorted_file', { fileId, category, subcategory: null });
-    setFiles((prev) => prev.filter((f) => f.id !== fileId));
+    try {
+      await invoke('validate_unsorted_file', { fileId, category, subcategory: null });
+      setFiles((prev) => prev.filter((f) => f.id !== fileId));
+    } catch (e) {
+      console.error('Validation failed:', e);
+    }
   };
 
   const dismiss = (fileId: string) => {
