@@ -1,4 +1,4 @@
-import { LayoutDashboard, FolderOpen } from 'lucide-react';
+import { LayoutDashboard, FolderOpen, Folder } from 'lucide-react';
 
 interface SidebarProps {
   currentView: string;
@@ -6,8 +6,9 @@ interface SidebarProps {
 }
 
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'unsorted', label: 'À valider', icon: FolderOpen },
+  { id: 'dashboard', label: 'Dashboard',  icon: LayoutDashboard },
+  { id: 'explorer',  label: 'Explorer',   icon: Folder },
+  { id: 'unsorted',  label: 'À valider',  icon: FolderOpen },
 ];
 
 export function Sidebar({ currentView, onNavigate }: SidebarProps) {
@@ -32,6 +33,9 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
           </button>
         ))}
       </nav>
+      <div className="px-4 pt-2 border-t border-zinc-800">
+        <p className="text-xs text-zinc-600">⌘K pour chercher</p>
+      </div>
     </div>
   );
 }
