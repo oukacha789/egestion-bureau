@@ -1,11 +1,8 @@
 use crate::db::models::{ActionRecord, FileRecord};
 use crate::engine::organizer::undo_action;
-use sqlx::SqlitePool;
 use tauri::State;
 
-pub struct AppState {
-    pub pool: SqlitePool,
-}
+use crate::AppState;
 
 #[tauri::command]
 pub async fn get_recent_activity(
