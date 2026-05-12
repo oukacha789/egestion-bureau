@@ -41,3 +41,12 @@ pub struct AiCacheRecord {
     pub cached_at: i64,
     pub expires_at: i64,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct TagRecord {
+    pub id: String,
+    pub file_id: String,
+    pub tag: String,
+    pub source: String,
+    pub weight: f64,
+}

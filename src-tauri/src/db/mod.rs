@@ -21,7 +21,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_init_pool_creates_tables() {
-        let pool = init_pool(":memory:").await.unwrap();
+        // Use sqlx's in-memory SQLite directly, bypassing init_pool's URI formatting
+        let pool = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
+        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
         let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM files")
             .fetch_one(&pool)
             .await

@@ -28,10 +28,11 @@ CREATE TABLE IF NOT EXISTS tags (
 
 CREATE INDEX IF NOT EXISTS idx_tags_file ON tags(file_id);
 CREATE INDEX IF NOT EXISTS idx_tags_tag  ON tags(tag);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tags_unique ON tags(file_id, tag);
 
 CREATE TABLE IF NOT EXISTS actions (
     id           TEXT PRIMARY KEY,
-    file_id      TEXT REFERENCES files(id),
+    file_id      TEXT REFERENCES files(id) ON DELETE SET NULL,
     action_type  TEXT NOT NULL,
     path_before  TEXT,
     path_after   TEXT,
@@ -41,6 +42,7 @@ CREATE TABLE IF NOT EXISTS actions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_actions_executed ON actions(executed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_files_hash ON files(hash_sha256);
 
 CREATE TABLE IF NOT EXISTS ai_cache (
     hash_sha256   TEXT PRIMARY KEY,
@@ -49,3 +51,5 @@ CREATE TABLE IF NOT EXISTS ai_cache (
     cached_at     INTEGER NOT NULL,
     expires_at    INTEGER NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_ai_cache_expires ON ai_cache(expires_at);
