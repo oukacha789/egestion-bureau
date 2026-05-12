@@ -132,10 +132,13 @@ async fn start_pipeline(
                                                 indexed_record.category = Some(classification.category.clone());
                                                 indexed_record.subcategory = classification.subcategory.clone();
 
-                                                if let Ok(mut idx) = search_index.lock() {
-                                                    if let Err(e) = idx.index_document(&indexed_record, &tags) {
-                                                        tracing::error!("Search index error: {}", e);
+                                                match search_index.lock() {
+                                                    Ok(mut idx) => {
+                                                        if let Err(e) = idx.index_document(&indexed_record, &tags) {
+                                                            tracing::error!("Search index error: {}", e);
+                                                        }
                                                     }
+                                                    Err(e) => tracing::error!("Search index mutex poisoned: {}", e),
                                                 }
                                             }
                                             Ok(None) => {}
