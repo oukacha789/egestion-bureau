@@ -1,6 +1,7 @@
 use crate::db::models::{ActionRecord, FileRecord};
 use crate::engine::organizer::undo_action;
 use crate::engine::search::SearchResult;
+use std::sync::Arc;
 use tauri::State;
 
 use crate::AppState;
@@ -136,12 +137,16 @@ pub async fn search_files(
             .collect());
     }
 
-    let idx = state
-        .search_index
-        .lock()
-        .map_err(|e| e.to_string())?;
-    idx.search(&query, limit, category.as_deref())
-        .map_err(|e| e.to_string())
+    let search_index = Arc::clone(&state.search_index);
+    let query_clone = query.clone();
+    let category_clone = category.clone();
+    tokio::task::spawn_blocking(move || {
+        let idx = search_index.lock().map_err(|e| e.to_string())?;
+        idx.search(&query_clone, limit, category_clone.as_deref())
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -233,6 +238,9 @@ pub async fn get_file_metadata(
 
 #[tauri::command]
 pub async fn open_in_finder(path: String) -> Result<(), String> {
+    if !std::path::Path::new(&path).exists() {
+        return Err(format!("Path does not exist: {}", path));
+    }
     std::process::Command::new("open")
         .arg("-R")
         .arg(&path)
