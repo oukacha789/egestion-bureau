@@ -16,13 +16,71 @@ export interface StatsData {
   duplicate_files: number;
 }
 
+export interface SearchResult {
+  id: string;
+  name: string;
+  path: string;
+  category: string;
+  subcategory: string;
+  tags: string[];
+  year: number;
+  score: number;
+}
+
+export interface FileRecord {
+  id: string;
+  path: string;
+  name: string;
+  extension: string | null;
+  size_bytes: number;
+  category: string | null;
+  subcategory: string | null;
+  confidence: number | null;
+  classifier: string | null;
+  modified_at: number;
+  created_at: number;
+}
+
+export interface FileMetadata {
+  id: string;
+  name: string;
+  path: string;
+  category: string | null;
+  subcategory: string | null;
+  tags: string[];
+  size_bytes: number;
+  created_at: number;
+  modified_at: number;
+  confidence: number | null;
+  classifier: string | null;
+}
+
 interface AppStore {
+  // Dashboard
   activity: ActivityItem[];
   stats: StatsData;
   isWatching: boolean;
   addActivity: (item: ActivityItem) => void;
   setStats: (stats: StatsData) => void;
   setIsWatching: (v: boolean) => void;
+
+  // Search
+  isSearchOpen: boolean;
+  searchResults: SearchResult[];
+  setSearchOpen: (open: boolean) => void;
+  setSearchResults: (results: SearchResult[]) => void;
+
+  // Explorer
+  selectedCategory: string;
+  selectedFileId: string | null;
+  explorerFiles: FileRecord[];
+  fileMetadata: FileMetadata | null;
+  explorerSort: string;
+  setSelectedCategory: (cat: string) => void;
+  setSelectedFile: (id: string | null) => void;
+  setExplorerFiles: (files: FileRecord[]) => void;
+  setFileMetadata: (meta: FileMetadata | null) => void;
+  setExplorerSort: (sort: string) => void;
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -30,9 +88,23 @@ export const useAppStore = create<AppStore>((set) => ({
   stats: { total_files: 0, organized_files: 0, duplicate_files: 0 },
   isWatching: false,
   addActivity: (item) =>
-    set((state) => ({
-      activity: [item, ...state.activity].slice(0, 50),
-    })),
+    set((state) => ({ activity: [item, ...state.activity].slice(0, 50) })),
   setStats: (stats) => set({ stats }),
   setIsWatching: (v) => set({ isWatching: v }),
+
+  isSearchOpen: false,
+  searchResults: [],
+  setSearchOpen: (open) => set({ isSearchOpen: open }),
+  setSearchResults: (results) => set({ searchResults: results }),
+
+  selectedCategory: 'document',
+  selectedFileId: null,
+  explorerFiles: [],
+  fileMetadata: null,
+  explorerSort: 'date',
+  setSelectedCategory: (cat) => set({ selectedCategory: cat, selectedFileId: null, fileMetadata: null }),
+  setSelectedFile: (id) => set({ selectedFileId: id }),
+  setExplorerFiles: (files) => set({ explorerFiles: files }),
+  setFileMetadata: (meta) => set({ fileMetadata: meta }),
+  setExplorerSort: (sort) => set({ explorerSort: sort }),
 }));
