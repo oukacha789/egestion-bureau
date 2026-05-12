@@ -83,3 +83,24 @@ pub async fn get_stats(state: State<'_, AppState>) -> Result<serde_json::Value, 
         "duplicate_files": duplicates.0,
     }))
 }
+
+// Temporary stubs — Task 7 will replace these
+#[tauri::command]
+pub async fn search_files() -> Result<Vec<serde_json::Value>, String> {
+    Ok(vec![])
+}
+
+#[tauri::command]
+pub async fn get_files_by_category() -> Result<Vec<serde_json::Value>, String> {
+    Ok(vec![])
+}
+
+#[tauri::command]
+pub async fn get_file_metadata() -> Result<serde_json::Value, String> {
+    Ok(serde_json::json!({}))
+}
+
+#[tauri::command]
+pub async fn open_in_finder() -> Result<(), String> {
+    Ok(())
+}
