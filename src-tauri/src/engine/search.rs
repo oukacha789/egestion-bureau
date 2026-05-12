@@ -69,9 +69,8 @@ impl SearchIndex {
     }
 
     fn timestamp_to_year(ts: i64) -> u64 {
-        use chrono::{DateTime, Utc};
-        DateTime::<Utc>::from_timestamp(ts, 0)
-            .map(|dt| {
+        chrono::DateTime::from_timestamp(ts, 0)
+            .map(|dt: chrono::DateTime<chrono::Utc>| {
                 use chrono::Datelike;
                 dt.year() as u64
             })
@@ -181,9 +180,12 @@ mod tests {
         let mut idx = SearchIndex::in_memory().unwrap();
         let record = make_test_record("file-2", "old_file.pdf", "document", "Divers", 1704067200);
         idx.index_document(&record, &[]).unwrap();
+        // Verify document IS found before deletion
+        let before = idx.search("old", 10, None).unwrap(); // use "old" which is a single token
+        assert_eq!(before.len(), 1, "Document should be found before deletion");
         idx.delete_document("file-2").unwrap();
-        let results = idx.search("old_file", 10, None).unwrap();
-        assert!(results.is_empty());
+        let results = idx.search("old", 10, None).unwrap();
+        assert!(results.is_empty(), "Document should be gone after deletion");
     }
 
     #[test]
