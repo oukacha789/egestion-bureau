@@ -71,8 +71,8 @@ export function MetadataPanel({ metadata }: Props) {
           <div>
             <div className="text-zinc-500 mb-1.5">Tags</div>
             <div className="flex flex-wrap gap-1">
-              {metadata.tags.map((t) => (
-                <span key={t} className="px-1.5 py-0.5 bg-zinc-700 rounded text-zinc-300">
+              {metadata.tags.map((t, i) => (
+                <span key={`${t}-${i}`} className="px-1.5 py-0.5 bg-zinc-700 rounded text-zinc-300">
                   {t}
                 </span>
               ))}

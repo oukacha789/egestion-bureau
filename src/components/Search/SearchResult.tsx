@@ -25,7 +25,7 @@ export function SearchResultItem({ result, isSelected, onClick }: Props) {
     <button
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-        isSelected ? 'bg-zinc-700' : 'hover:bg-zinc-750'
+        isSelected ? 'bg-zinc-700' : 'hover:bg-zinc-800'
       }`}
     >
       <Icon size={16} className="text-zinc-400 shrink-0" />
