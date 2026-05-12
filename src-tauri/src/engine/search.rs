@@ -105,6 +105,53 @@ impl SearchIndex {
         Ok(())
     }
 
+    pub async fn rebuild_from_db(&mut self, pool: &sqlx::SqlitePool) -> Result<()> {
+        let searcher = self.reader.searcher();
+        if searcher.num_docs() > 0 {
+            return Ok(());
+        }
+
+        let files = sqlx::query_as::<_, FileRecord>(
+            "SELECT id, path, name, extension, size_bytes, hash_sha256, created_at, modified_at, indexed_at, \
+             category, subcategory, confidence, classifier, is_duplicate, duplicate_of, is_organized, source_dir \
+             FROM files WHERE is_organized = 1"
+        )
+        .fetch_all(pool)
+        .await?;
+
+        for file in &files {
+            let tags: Vec<String> = sqlx::query_as::<_, (String,)>(
+                "SELECT tag FROM tags WHERE file_id = ?"
+            )
+            .bind(&file.id)
+            .fetch_all(pool)
+            .await
+            .unwrap_or_default()
+            .into_iter()
+            .map(|(t,)| t)
+            .collect();
+
+            let mut doc = TantivyDocument::default();
+            doc.add_text(self.id_field, &file.id);
+            doc.add_text(self.name_field, &file.name);
+            doc.add_text(self.path_field, &file.path);
+            doc.add_text(self.category_field, file.category.as_deref().unwrap_or("other"));
+            doc.add_text(self.subcategory_field, file.subcategory.as_deref().unwrap_or(""));
+            for tag in &tags {
+                doc.add_text(self.tags_field, tag);
+            }
+            doc.add_u64(self.year_field, Self::timestamp_to_year(file.created_at));
+            self.writer.add_document(doc)?;
+        }
+
+        if !files.is_empty() {
+            self.writer.commit()?;
+            self.reader.reload()?;
+        }
+        tracing::info!("Search index rebuilt: {} documents", files.len());
+        Ok(())
+    }
+
     pub fn search(&self, query: &str, limit: usize, category: Option<&str>) -> Result<Vec<SearchResult>> {
         use tantivy::{collector::TopDocs, query::QueryParser};
 
@@ -198,6 +245,17 @@ mod tests {
         let results = idx.search("vacances", 10, Some("photo")).unwrap();
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].id, "file-3");
+    }
+
+    #[tokio::test]
+    async fn test_rebuild_from_empty_db() {
+        let pool = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
+        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+        let mut idx = SearchIndex::in_memory().unwrap();
+        // DB has 0 organized files — rebuild should succeed and index stays empty
+        idx.rebuild_from_db(&pool).await.unwrap();
+        let results = idx.search("anything", 10, None).unwrap();
+        assert!(results.is_empty());
     }
 
     fn make_test_record(id: &str, name: &str, category: &str, subcategory: &str, ts: i64) -> FileRecord {
