@@ -1,6 +1,7 @@
 use crate::db::models::{ActionRecord, FileRecord};
 use crate::engine::organizer::undo_action;
 use crate::engine::search::SearchResult;
+use crate::engine::watcher::default_watch_dirs;
 use std::sync::Arc;
 use tauri::State;
 
@@ -260,8 +261,7 @@ pub async fn read_text_preview(path: String) -> Result<String, String> {
 }
 
 #[tauri::command]
-pub async fn get_watch_dirs() -> Vec<String> {
-    use crate::engine::watcher::default_watch_dirs;
+pub fn get_watch_dirs() -> Vec<String> {
     default_watch_dirs()
         .iter()
         .filter_map(|p| p.file_name())
