@@ -1,4 +1,5 @@
 // src/components/Explorer/FileList.tsx
+import { useState } from 'react';
 import { FileText, Image, Music, Video, Archive, Code, HelpCircle, Download } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { FileRecord } from '../../store';
@@ -32,7 +33,10 @@ interface Props {
 }
 
 export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFile }: Props) {
+  const [csvExporting, setCsvExporting] = useState(false);
+
   async function handleExportCsv() {
+    setCsvExporting(true);
     try {
       const csv = await invoke<string>('export_csv', {
         filters: { category: null, tags: [], date_from: null, date_to: null },
@@ -43,9 +47,11 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
       a.href = url;
       a.download = `egestion-export-${Date.now()}.csv`;
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (err) {
       console.error('export_csv error:', err);
+    } finally {
+      setCsvExporting(false);
     }
   }
 
@@ -70,7 +76,8 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
         <SortBtn col="size" label="Taille" />
         <button
           onClick={handleExportCsv}
-          className="px-3 py-2 text-xs text-zinc-500 hover:text-zinc-200 flex items-center gap-1 transition-colors"
+          disabled={csvExporting}
+          className="px-3 py-2 text-xs text-zinc-500 hover:text-zinc-200 flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Exporter en CSV"
         >
           <Download size={12} />

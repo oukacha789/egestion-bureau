@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useAppStore } from '../../store';
 import { ActivityFeed } from './ActivityFeed';
@@ -17,8 +18,10 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
 
 export function Dashboard() {
   const { stats, isWatching } = useAppStore();
+  const [reportExporting, setReportExporting] = useState(false);
 
   async function handleExportReport() {
+    setReportExporting(true);
     try {
       const html = await invoke<string>('export_report');
       const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
@@ -27,9 +30,11 @@ export function Dashboard() {
       a.href = url;
       a.download = `egestion-rapport-${Date.now()}.html`;
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (err) {
       console.error('export_report error:', err);
+    } finally {
+      setReportExporting(false);
     }
   }
 
@@ -41,7 +46,8 @@ export function Dashboard() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleExportReport}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs text-zinc-300 transition-colors"
+              disabled={reportExporting}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs text-zinc-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <BarChart2 size={12} />
               Rapport
