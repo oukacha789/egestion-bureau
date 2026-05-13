@@ -1,6 +1,7 @@
+import { invoke } from '@tauri-apps/api/core';
 import { useAppStore } from '../../store';
 import { ActivityFeed } from './ActivityFeed';
-import { Files, CheckSquare, Copy } from 'lucide-react';
+import { Files, CheckSquare, Copy, BarChart2 } from 'lucide-react';
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
@@ -17,12 +18,34 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
 export function Dashboard() {
   const { stats, isWatching } = useAppStore();
 
+  async function handleExportReport() {
+    try {
+      const html = await invoke<string>('export_report');
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `egestion-rapport-${Date.now()}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('export_report error:', err);
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 py-5 border-b border-zinc-800">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold text-zinc-100">Dashboard</h1>
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportReport}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs text-zinc-300 transition-colors"
+            >
+              <BarChart2 size={12} />
+              Rapport
+            </button>
             <div className={`w-2 h-2 rounded-full ${isWatching ? 'bg-green-400 animate-pulse' : 'bg-zinc-600'}`} />
             <span className="text-xs text-zinc-500">{isWatching ? 'Actif' : 'Inactif'}</span>
           </div>

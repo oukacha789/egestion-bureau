@@ -1,5 +1,6 @@
 // src/components/Explorer/FileList.tsx
-import { FileText, Image, Music, Video, Archive, Code, HelpCircle } from 'lucide-react';
+import { FileText, Image, Music, Video, Archive, Code, HelpCircle, Download } from 'lucide-react';
+import { invoke } from '@tauri-apps/api/core';
 import { FileRecord } from '../../store';
 
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -31,6 +32,23 @@ interface Props {
 }
 
 export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFile }: Props) {
+  async function handleExportCsv() {
+    try {
+      const csv = await invoke<string>('export_csv', {
+        filters: { category: null, tags: [], date_from: null, date_to: null },
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `egestion-export-${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('export_csv error:', err);
+    }
+  }
+
   const SortBtn = ({ col, label }: { col: string; label: string }) => (
     <button
       onClick={() => onSortChange(col)}
@@ -50,6 +68,14 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
         <div className="flex-1" />
         <SortBtn col="date" label="Date" />
         <SortBtn col="size" label="Taille" />
+        <button
+          onClick={handleExportCsv}
+          className="px-3 py-2 text-xs text-zinc-500 hover:text-zinc-200 flex items-center gap-1 transition-colors"
+          title="Exporter en CSV"
+        >
+          <Download size={12} />
+          CSV
+        </button>
       </div>
 
       {/* File list */}
