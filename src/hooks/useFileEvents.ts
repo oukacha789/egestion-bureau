@@ -13,7 +13,7 @@ interface FileOrganizedPayload {
 }
 
 export function useFileEvents() {
-  const { addActivity, setStats, setIsWatching } = useAppStore();
+  const { addActivity, setStats, setIsWatching, setWatchedDirs } = useAppStore();
 
   useEffect(() => {
     setIsWatching(true);
@@ -36,6 +36,10 @@ export function useFileEvents() {
 
     invoke<{ total_files: number; organized_files: number; duplicate_files: number }>('get_stats')
       .then(setStats)
+      .catch(console.error);
+
+    invoke<string[]>('get_watch_dirs')
+      .then(setWatchedDirs)
       .catch(console.error);
 
     return () => {

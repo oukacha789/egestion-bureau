@@ -71,6 +71,10 @@ interface AppStore {
   setStats: (stats: StatsData) => void;
   setIsWatching: (v: boolean) => void;
 
+  // Sidebar
+  watchedDirs: string[];
+  setWatchedDirs: (dirs: string[]) => void;
+
   // Search
   isSearchOpen: boolean;
   searchResults: SearchResult[];
@@ -105,6 +109,9 @@ export const useAppStore = create<AppStore>((set) => ({
     set((state) => ({ activity: [item, ...state.activity].slice(0, 50) })),
   setStats: (stats) => set({ stats }),
   setIsWatching: (v) => set({ isWatching: v }),
+
+  watchedDirs: [],
+  setWatchedDirs: (dirs) => set({ watchedDirs: dirs }),
 
   isSearchOpen: false,
   searchResults: [],
