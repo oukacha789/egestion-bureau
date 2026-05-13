@@ -36,6 +36,9 @@ pub fn run() {
             commands::get_files_by_category,
             commands::get_file_metadata,
             commands::open_in_finder,
+            commands::get_tags,
+            commands::add_tag,
+            commands::remove_tag,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
