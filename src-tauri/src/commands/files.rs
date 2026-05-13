@@ -259,6 +259,16 @@ pub async fn read_text_preview(path: String) -> Result<String, String> {
     Ok(String::from_utf8_lossy(&buf).into_owned())
 }
 
+#[tauri::command]
+pub async fn get_watch_dirs() -> Vec<String> {
+    use crate::engine::watcher::default_watch_dirs;
+    default_watch_dirs()
+        .iter()
+        .filter_map(|p| p.file_name())
+        .map(|n| n.to_string_lossy().into_owned())
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

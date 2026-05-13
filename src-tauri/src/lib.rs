@@ -43,6 +43,7 @@ pub fn run() {
             commands::ask_assistant,
             commands::export_csv,
             commands::export_report,
+            commands::get_watch_dirs,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
