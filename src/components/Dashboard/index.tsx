@@ -23,7 +23,7 @@ interface StatCardProps {
 
 function StatCard({ label, value, sub, accent, icon }: StatCardProps) {
   return (
-    <div className="group relative bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col gap-3 hover:border-zinc-700 transition-colors duration-200 overflow-hidden">
+    <div className="group relative bg-[#220810] border border-[#3D1525] rounded-xl p-5 flex flex-col gap-3 hover:border-[#5C1A2A] transition-colors duration-200 overflow-hidden">
       {/* accent line */}
       <div className={`absolute top-0 left-0 right-0 h-px ${accent}`} />
 
@@ -64,7 +64,7 @@ function TabPill({
       onClick={onClick}
       className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-150 ${
         active
-          ? 'bg-zinc-700 text-zinc-100'
+          ? 'bg-[#5C1A2A] text-zinc-100'
           : 'text-zinc-500 hover:text-zinc-300'
       }`}
     >
@@ -104,10 +104,10 @@ export function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950">
+    <div className="flex flex-col h-full bg-[#1A0408]">
 
       {/* ── Topbar ─────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-5 h-11 border-b border-zinc-800/80 shrink-0">
+      <div className="flex items-center justify-between px-5 h-11 border-b border-[#3D1525]/80 shrink-0">
 
         {/* Status dot + label */}
         <div className="flex items-center gap-2">
@@ -121,7 +121,7 @@ export function Dashboard() {
         </div>
 
         {/* Tab pills */}
-        <div className="flex items-center gap-0.5 bg-zinc-900 border border-zinc-800 rounded-lg p-0.5">
+        <div className="flex items-center gap-0.5 bg-[#220810] border border-[#3D1525] rounded-lg p-0.5">
           <TabPill active={tab === 'apercu'} onClick={() => setTab('apercu')}>
             Aperçu
           </TabPill>
@@ -131,20 +131,20 @@ export function Dashboard() {
         </div>
 
         {/* Action group */}
-        <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-[#220810] border border-[#3D1525] rounded-lg p-1">
           <button
             onClick={handleExportReport}
             disabled={reportExporting}
             title="Générer rapport HTML"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-[#4A1525] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <BarChart2 size={11} />
             Rapport
           </button>
-          <div className="w-px h-4 bg-zinc-800" />
+          <div className="w-px h-4 bg-[#3D1525]" />
           <button
             title="Exporter CSV"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-[#4A1525] transition-all"
           >
             <Download size={11} />
             CSV
@@ -198,7 +198,7 @@ export function Dashboard() {
                 Tout voir →
               </button>
             </div>
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+            <div className="bg-[#220810] border border-[#3D1525] rounded-xl overflow-hidden">
               <ActivityFeed limit={5} />
             </div>
           </div>
@@ -213,7 +213,7 @@ export function Dashboard() {
             </span>
           </div>
           <div className="px-5 pb-5">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+            <div className="bg-[#220810] border border-[#3D1525] rounded-xl overflow-hidden">
               <ActivityFeed />
             </div>
           </div>
