@@ -3,6 +3,7 @@ import { Dashboard } from './components/Dashboard';
 import { Unsorted } from './components/Unsorted';
 import { Explorer } from './components/Explorer';
 import { CommandPalette } from './components/Search/CommandPalette';
+import { AssistantOverlay } from './components/Assistant/AssistantOverlay';
 import { Sidebar } from './components/layout/Sidebar';
 import { useFileEvents } from './hooks/useFileEvents';
 import { useKeyboard } from './hooks/useKeyboard';
@@ -21,6 +22,7 @@ function App() {
         {currentView === 'unsorted'  && <Unsorted />}
       </main>
       <CommandPalette />
+      <AssistantOverlay />
     </div>
   );
 }

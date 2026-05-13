@@ -55,6 +55,12 @@ export interface FileMetadata {
   classifier: string | null;
 }
 
+export interface AssistantMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  files: FileRecord[];
+}
+
 interface AppStore {
   // Dashboard
   activity: ActivityItem[];
@@ -69,6 +75,13 @@ interface AppStore {
   searchResults: SearchResult[];
   setSearchOpen: (open: boolean) => void;
   setSearchResults: (results: SearchResult[]) => void;
+
+  // Assistant
+  isAssistantOpen: boolean;
+  assistantMessages: AssistantMessage[];
+  setAssistantOpen: (open: boolean) => void;
+  addAssistantMessage: (msg: AssistantMessage) => void;
+  clearAssistantMessages: () => void;
 
   // Explorer
   selectedCategory: string;
@@ -96,6 +109,13 @@ export const useAppStore = create<AppStore>((set) => ({
   searchResults: [],
   setSearchOpen: (open) => set({ isSearchOpen: open }),
   setSearchResults: (results) => set({ searchResults: results }),
+
+  isAssistantOpen: false,
+  assistantMessages: [],
+  setAssistantOpen: (open) => set({ isAssistantOpen: open }),
+  addAssistantMessage: (msg) =>
+    set((state) => ({ assistantMessages: [...state.assistantMessages, msg] })),
+  clearAssistantMessages: () => set({ assistantMessages: [] }),
 
   selectedCategory: 'document',
   selectedFileId: null,
