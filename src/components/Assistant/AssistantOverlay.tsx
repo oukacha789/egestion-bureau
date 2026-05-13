@@ -37,8 +37,8 @@ export function AssistantOverlay() {
     addMessage(userMsg);
     setLoading(true);
 
-    // Build history including the new user message so multi-turn context is complete
-    const history = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }));
+    // Send previous messages as context; backend appends query as the current user turn
+    const history = messages.map((m) => ({ role: m.role, content: m.content }));
 
     try {
       const response = await invoke<{ files: FileRecord[]; text: string }>('ask_assistant', {
