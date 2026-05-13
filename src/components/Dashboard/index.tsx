@@ -9,67 +9,34 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = 'apercu' | 'activite';
-
 interface StatCardProps {
   label: string;
   value: string | number;
   sub?: string;
-  accent: string;
+  color: string;
   icon: React.ReactNode;
 }
 
 // ─── StatCard ─────────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, sub, accent, icon }: StatCardProps) {
+function StatCard({ label, value, sub, color, icon }: StatCardProps) {
   return (
-    <div className="group relative bg-bx-900 border border-bx-800 rounded-xl p-5 flex flex-col gap-3 hover:border-bx-600 transition-colors duration-200 overflow-hidden">
-      {/* accent line */}
-      <div className={`absolute top-0 left-0 right-0 h-px ${accent}`} />
-
+    <div className="bg-bx-900 border border-bx-800 rounded-xl p-4 flex flex-col gap-2 hover:border-bx-600 transition-colors duration-200">
       <div className="flex items-start justify-between">
         <span className="text-[10px] font-medium tracking-widest uppercase text-zinc-500 leading-none">
           {label}
         </span>
-        <span className="text-zinc-700 group-hover:text-zinc-500 transition-colors">
-          {icon}
-        </span>
+        <span className="text-zinc-700">{icon}</span>
       </div>
-
-      <div className="flex items-end gap-2">
-        <span className="text-3xl font-mono font-light text-zinc-100 leading-none tabular-nums">
+      <div className="flex items-end gap-1.5">
+        <span className={`text-2xl font-mono font-light leading-none tabular-nums ${color}`}>
           {value}
         </span>
-        {sub && (
-          <span className="text-xs text-zinc-600 mb-0.5 font-mono">{sub}</span>
-        )}
       </div>
+      {sub && (
+        <span className="text-[10px] text-zinc-600 font-mono">{sub}</span>
+      )}
     </div>
-  );
-}
-
-// ─── TabPill ─────────────────────────────────────────────────────────────────
-
-function TabPill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-150 ${
-        active
-          ? 'bg-bx-600 text-zinc-100'
-          : 'text-zinc-500 hover:text-zinc-300'
-      }`}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -77,13 +44,16 @@ function TabPill({
 
 export function Dashboard() {
   const { stats, isWatching } = useAppStore();
-  const [tab, setTab] = useState<Tab>('apercu');
   const [reportExporting, setReportExporting] = useState(false);
 
   const orgRate =
     stats.total_files > 0
       ? Math.round((stats.organized_files / stats.total_files) * 100)
       : 0;
+
+  const today = new Date().toLocaleDateString('fr-FR', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
 
   async function handleExportReport() {
     setReportExporting(true);
@@ -108,43 +78,18 @@ export function Dashboard() {
 
       {/* ── Topbar ─────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-5 h-11 border-b border-bx-800/80 shrink-0">
-
-        {/* Status dot + label */}
-        <div className="flex items-center gap-2">
-          <Circle
-            size={6}
-            className={isWatching ? 'fill-emerald-400 text-emerald-400' : 'fill-zinc-600 text-zinc-600'}
-          />
-          <span className="text-[10px] tracking-widest uppercase text-zinc-500 font-medium select-none">
-            {isWatching ? 'Actif' : 'Inactif'}
-          </span>
-        </div>
-
-        {/* Tab pills */}
-        <div className="flex items-center gap-0.5 bg-bx-900 border border-bx-800 rounded-lg p-0.5">
-          <TabPill active={tab === 'apercu'} onClick={() => setTab('apercu')}>
-            Aperçu
-          </TabPill>
-          <TabPill active={tab === 'activite'} onClick={() => setTab('activite')}>
-            Activité
-          </TabPill>
-        </div>
-
-        {/* Action group */}
-        <div className="flex items-center gap-1 bg-bx-900 border border-bx-800 rounded-lg p-1">
+        <span className="text-sm font-semibold text-zinc-100 tracking-tight">Dashboard</span>
+        <div className="flex items-center gap-1.5">
           <button
             onClick={handleExportReport}
             disabled={reportExporting}
-            title="Générer rapport HTML"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-bx-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-bx-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <BarChart2 size={11} />
             Rapport
           </button>
-          <div className="w-px h-4 bg-bx-800" />
           <button
-            title="Exporter CSV"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-bx-700 transition-all"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-bx-800 transition-all"
           >
             <Download size={11} />
             CSV
@@ -152,73 +97,83 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* ── Content ────────────────────────────────────────────── */}
-      {tab === 'apercu' && (
-        <div className="flex-1 overflow-auto px-5 py-5 flex flex-col gap-5">
+      {/* ── Scrollable content ─────────────────────────────────── */}
+      <div className="flex-1 overflow-auto px-5 py-5 flex flex-col gap-5">
 
-          {/* Stat grid 2×2 */}
-          <div className="grid grid-cols-2 gap-3">
-            <StatCard
-              label="Total indexés"
-              value={stats.total_files.toLocaleString()}
-              accent="bg-gradient-to-r from-indigo-500/60 to-transparent"
-              icon={<Files size={14} />}
-            />
-            <StatCard
-              label="Organisés"
-              value={stats.organized_files.toLocaleString()}
-              accent="bg-gradient-to-r from-emerald-500/60 to-transparent"
-              icon={<CheckSquare size={14} />}
-            />
-            <StatCard
-              label="Doublons"
-              value={stats.duplicate_files.toLocaleString()}
-              accent="bg-gradient-to-r from-rose-500/60 to-transparent"
-              icon={<Copy size={14} />}
-            />
-            <StatCard
-              label="Taux d'org."
-              value={`${orgRate}`}
-              sub="%"
-              accent="bg-gradient-to-r from-amber-500/60 to-transparent"
-              icon={<TrendingUp size={14} />}
-            />
-          </div>
-
-          {/* Activity preview */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] tracking-widest uppercase text-zinc-600 font-medium">
-                Activité récente
-              </span>
-              <button
-                onClick={() => setTab('activite')}
-                className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
-              >
-                Tout voir →
-              </button>
-            </div>
-            <div className="bg-bx-900 border border-bx-800 rounded-xl overflow-hidden">
-              <ActivityFeed limit={5} />
+        {/* Hero */}
+        <div className="bg-gradient-to-br from-bx-800 via-bx-900 to-bx-950 border border-bx-700 rounded-xl p-5">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <p className="text-lg font-semibold text-zinc-100 mb-1">Bonjour 👋</p>
+              <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                <Circle
+                  size={6}
+                  className={isWatching ? 'fill-emerald-400 text-emerald-400' : 'fill-zinc-600 text-zinc-600'}
+                />
+                <span>{isWatching ? 'Surveillance active' : 'Inactive'}</span>
+                <span className="text-bx-700">·</span>
+                <span className="capitalize">{today}</span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {tab === 'activite' && (
-        <div className="flex-1 overflow-auto">
-          <div className="px-5 py-4">
-            <span className="text-[10px] tracking-widest uppercase text-zinc-600 font-medium">
-              Historique complet
+          <div className="flex items-center gap-3">
+            <div className="flex-1 bg-bx-950 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-500"
+                style={{ width: `${orgRate}%` }}
+              />
+            </div>
+            <span className="text-[11px] text-zinc-500 whitespace-nowrap">
+              {orgRate}% organisés · objectif 90%
             </span>
           </div>
-          <div className="px-5 pb-5">
-            <div className="bg-bx-900 border border-bx-800 rounded-xl overflow-hidden">
-              <ActivityFeed />
-            </div>
+        </div>
+
+        {/* Stats row — 4 colonnes */}
+        <div className="grid grid-cols-4 gap-3">
+          <StatCard
+            label="Total indexés"
+            value={stats.total_files.toLocaleString('fr-FR')}
+            sub="fichiers détectés"
+            color="text-zinc-100"
+            icon={<Files size={13} />}
+          />
+          <StatCard
+            label="Organisés"
+            value={stats.organized_files.toLocaleString('fr-FR')}
+            sub={stats.total_files > 0 ? `${orgRate}% du total` : '—'}
+            color="text-emerald-400"
+            icon={<CheckSquare size={13} />}
+          />
+          <StatCard
+            label="Doublons"
+            value={stats.duplicate_files.toLocaleString('fr-FR')}
+            sub="à traiter"
+            color="text-rose-400"
+            icon={<Copy size={13} />}
+          />
+          <StatCard
+            label="Taux d'org."
+            value={`${orgRate}`}
+            sub="objectif : 90%"
+            color="text-amber-400"
+            icon={<TrendingUp size={13} />}
+          />
+        </div>
+
+        {/* Activity feed */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] tracking-widest uppercase text-zinc-600 font-medium">
+              Activité récente
+            </span>
+          </div>
+          <div className="bg-bx-900 border border-bx-800 rounded-xl overflow-hidden">
+            <ActivityFeed />
           </div>
         </div>
-      )}
+
+      </div>
     </div>
   );
 }
