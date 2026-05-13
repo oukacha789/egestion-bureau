@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { ExternalLink } from 'lucide-react';
 import { FileMetadata } from '../../store';
 import { TagEditor } from './TagEditor';
+import { QuickLookPanel } from '../Preview/QuickLookPanel';
 
 function formatBytes(b: number): string {
   if (b < 1024) return `${b} o`;
@@ -80,6 +81,7 @@ export function MetadataPanel({ metadata }: Props) {
             </div>
           </div>
         )}
+        <QuickLookPanel path={metadata.path} />
         <TagEditor fileId={metadata.id} />
       </div>
 
