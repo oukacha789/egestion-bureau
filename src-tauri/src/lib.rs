@@ -41,6 +41,8 @@ pub fn run() {
             commands::remove_tag,
             commands::read_text_preview,
             commands::ask_assistant,
+            commands::export_csv,
+            commands::export_report,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
