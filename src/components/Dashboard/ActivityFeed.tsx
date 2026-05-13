@@ -12,7 +12,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 };
 
 function formatRelative(ts: number): string {
-  const diffSec = Math.floor(Date.now() / 1000) - ts;
+  const diffSec = Math.max(0, Math.floor(Date.now() / 1000) - ts);
   if (diffSec < 60)  return 'à l\'instant';
   if (diffSec < 3600) return `il y a ${Math.floor(diffSec / 60)} min`;
   if (diffSec < 86400) return `il y a ${Math.floor(diffSec / 3600)} h`;
@@ -43,7 +43,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
         <p className="text-sm text-zinc-100 truncate font-medium">{item.name}</p>
         <p className="text-xs text-zinc-500 truncate">→ {destFolder}</p>
       </div>
-      <span className="text-[10px] text-zinc-700 flex-shrink-0 mr-1">
+      <span className="text-[10px] text-zinc-500 flex-shrink-0 mr-1">
         {formatRelative(item.timestamp)}
       </span>
       <button
