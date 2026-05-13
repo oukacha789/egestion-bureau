@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useAppStore } from '../../store';
 import { ActivityFeed } from './ActivityFeed';
@@ -51,9 +51,9 @@ export function Dashboard() {
       ? Math.round((stats.organized_files / stats.total_files) * 100)
       : 0;
 
-  const today = new Date().toLocaleDateString('fr-FR', {
+  const today = useMemo(() => new Date().toLocaleDateString('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  });
+  }), []);
 
   async function handleExportReport() {
     setReportExporting(true);
@@ -89,7 +89,9 @@ export function Dashboard() {
             Rapport
           </button>
           <button
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-bx-800 transition-all"
+            disabled
+            title="À venir"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-bx-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Download size={11} />
             CSV
