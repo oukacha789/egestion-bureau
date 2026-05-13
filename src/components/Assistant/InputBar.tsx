@@ -40,6 +40,7 @@ export function InputBar({ onSubmit, loading }: Props) {
       <button
         onClick={handleSubmit}
         disabled={!value.trim() || loading}
+        aria-label="Envoyer"
         className="p-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
       >
         <Send size={16} />

@@ -16,8 +16,8 @@ export function MessageList({ messages }: Props) {
 
   return (
     <div className="flex-1 overflow-y-auto space-y-4 p-4">
-      {messages.map((msg, i) => (
-        <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+      {messages.map((msg) => (
+        <div key={msg.createdAt} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
           {msg.role === 'user' ? (
             <div className="max-w-xs px-3 py-2 bg-indigo-600 rounded-2xl rounded-tr-sm text-sm text-white">
               {msg.content}

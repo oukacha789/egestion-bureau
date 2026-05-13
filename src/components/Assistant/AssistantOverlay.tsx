@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { X } from 'lucide-react';
-import { useAppStore, AssistantMessage } from '../../store';
+import { useAppStore, AssistantMessage, FileRecord } from '../../store';
 import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
 
@@ -14,6 +14,11 @@ export function AssistantOverlay() {
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const close = useCallback(() => {
+    setOpen(false);
+    clearMessages();
+  }, [setOpen, clearMessages]);
+
   useEffect(() => {
     if (!isOpen) return;
     function handleKey(e: KeyboardEvent) {
@@ -21,25 +26,22 @@ export function AssistantOverlay() {
     }
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isOpen]);
+  }, [isOpen, close]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  function close() {
-    setOpen(false);
-    clearMessages();
-  }
-
   async function handleSubmit(query: string) {
-    addMessage({ role: 'user', content: query, files: [] });
+    const userMsg: AssistantMessage = { role: 'user', content: query, files: [], createdAt: Date.now() };
+    addMessage(userMsg);
     setLoading(true);
 
-    const history = messages.map((m: AssistantMessage) => ({ role: m.role, content: m.content }));
+    // Build history including the new user message so multi-turn context is complete
+    const history = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }));
 
     try {
-      const response = await invoke<{ files: any[]; text: string }>('ask_assistant', {
+      const response = await invoke<{ files: FileRecord[]; text: string }>('ask_assistant', {
         query,
         history,
       });
@@ -47,12 +49,14 @@ export function AssistantOverlay() {
         role: 'assistant',
         content: response.text,
         files: response.files,
+        createdAt: Date.now(),
       });
     } catch (err) {
       addMessage({
         role: 'assistant',
         content: `Erreur : ${err}`,
         files: [],
+        createdAt: Date.now(),
       });
     } finally {
       setLoading(false);
@@ -73,6 +77,7 @@ export function AssistantOverlay() {
             <span className="text-xs text-zinc-500">⌘J</span>
             <button
               onClick={close}
+              aria-label="Fermer l'assistant"
               className="p-1 text-zinc-500 hover:text-zinc-200 transition-colors"
             >
               <X size={16} />

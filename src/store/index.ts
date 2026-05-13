@@ -59,6 +59,7 @@ export interface AssistantMessage {
   role: 'user' | 'assistant';
   content: string;
   files: FileRecord[];
+  createdAt: number;
 }
 
 interface AppStore {
