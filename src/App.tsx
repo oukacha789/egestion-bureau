@@ -14,7 +14,7 @@ function App() {
   useKeyboard();
 
   return (
-    <div className="flex h-screen bg-[#1A0408] text-zinc-100 overflow-hidden">
+    <div className="flex h-screen bg-bx-950 text-zinc-100 overflow-hidden">
       <Sidebar currentView={currentView} onNavigate={setCurrentView} />
       <main className="flex-1 overflow-hidden">
         {currentView === 'dashboard' && <Dashboard />}

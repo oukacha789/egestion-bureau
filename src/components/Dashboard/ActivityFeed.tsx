@@ -27,7 +27,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
   const destFolder = item.path_after.split('/').slice(-2).join('/');
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#3D1020]/60 group transition-colors">
+    <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-bx-800/60 group transition-colors">
       <div className="flex-shrink-0">{icon}</div>
       <div className="flex-1 min-w-0">
         <p className="text-sm text-zinc-100 truncate font-medium">{item.name}</p>
@@ -35,7 +35,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
       </div>
       <button
         onClick={handleUndo}
-        className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-100 px-2 py-1 rounded hover:bg-[#5C1A2A]"
+        className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-100 px-2 py-1 rounded hover:bg-bx-600"
       >
         <Undo2 size={12} />
         annuler
@@ -58,7 +58,7 @@ export function ActivityFeed({ limit }: { limit?: number } = {}) {
   }
 
   return (
-    <div className="divide-y divide-[#3D1525]">
+    <div className="divide-y divide-bx-800">
       {items.map((item) => (
         <ActivityRow key={item.action_id} item={item} />
       ))}
