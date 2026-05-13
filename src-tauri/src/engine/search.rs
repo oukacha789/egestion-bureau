@@ -19,6 +19,7 @@ pub struct SearchIndex {
     pub subcategory_field: Field,
     pub tags_field: Field,
     pub year_field: Field,
+    pub description_field: Field,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -34,38 +35,51 @@ pub struct SearchResult {
 }
 
 impl SearchIndex {
-    fn build_schema() -> (Schema, Field, Field, Field, Field, Field, Field, Field) {
+    fn build_schema() -> (Schema, Field, Field, Field, Field, Field, Field, Field, Field) {
         let mut b = Schema::builder();
-        let id_field       = b.add_text_field("id",          STRING | STORED);
-        let name_field     = b.add_text_field("name",        TEXT | STORED);
-        let path_field     = b.add_text_field("path",        STORED);
-        let category_field = b.add_text_field("category",    STRING | STORED);
-        let sub_field      = b.add_text_field("subcategory", TEXT | STORED);
-        let tags_field     = b.add_text_field("tags",        TEXT | STORED);
-        let year_field     = b.add_u64_field("year",         STORED | INDEXED | FAST);
-        (b.build(), id_field, name_field, path_field, category_field, sub_field, tags_field, year_field)
+        let id_field          = b.add_text_field("id",          STRING | STORED);
+        let name_field        = b.add_text_field("name",        TEXT | STORED);
+        let path_field        = b.add_text_field("path",        STORED);
+        let category_field    = b.add_text_field("category",    STRING | STORED);
+        let sub_field         = b.add_text_field("subcategory", TEXT | STORED);
+        let tags_field        = b.add_text_field("tags",        TEXT | STORED);
+        let year_field        = b.add_u64_field("year",         STORED | INDEXED | FAST);
+        let description_field = b.add_text_field("description", TEXT | STORED);
+        (b.build(), id_field, name_field, path_field, category_field, sub_field, tags_field, year_field, description_field)
     }
 
     pub fn open_or_create(index_path: &std::path::Path) -> Result<Self> {
-        let (schema, id_field, name_field, path_field, category_field, subcategory_field, tags_field, year_field) =
+        let (schema, id_field, name_field, path_field, category_field, subcategory_field, tags_field, year_field, description_field) =
             Self::build_schema();
         std::fs::create_dir_all(index_path)?;
-        let dir = tantivy::directory::MmapDirectory::open(index_path)?;
-        let index = Index::open_or_create(dir, schema)?;
+
+        let index = {
+            let dir = tantivy::directory::MmapDirectory::open(index_path)?;
+            match Index::open_or_create(dir, schema.clone()) {
+                Ok(idx) => idx,
+                Err(_) => {
+                    std::fs::remove_dir_all(index_path)?;
+                    std::fs::create_dir_all(index_path)?;
+                    let dir = tantivy::directory::MmapDirectory::open(index_path)?;
+                    Index::open_or_create(dir, schema)?
+                }
+            }
+        };
+
         let writer = index.writer(50_000_000)?;
         let reader = index.reader()?;
-        Ok(Self { index, writer, reader, id_field, name_field, path_field, category_field, subcategory_field, tags_field, year_field })
+        Ok(Self { index, writer, reader, id_field, name_field, path_field, category_field, subcategory_field, tags_field, year_field, description_field })
     }
 
     #[cfg(test)]
     pub fn in_memory() -> Result<Self> {
-        let (schema, id_field, name_field, path_field, category_field, subcategory_field, tags_field, year_field) =
+        let (schema, id_field, name_field, path_field, category_field, subcategory_field, tags_field, year_field, description_field) =
             Self::build_schema();
         let dir = RamDirectory::create();
         let index = Index::open_or_create(dir, schema)?;
         let writer = index.writer(50_000_000)?;
         let reader = index.reader()?;
-        Ok(Self { index, writer, reader, id_field, name_field, path_field, category_field, subcategory_field, tags_field, year_field })
+        Ok(Self { index, writer, reader, id_field, name_field, path_field, category_field, subcategory_field, tags_field, year_field, description_field })
     }
 
     fn timestamp_to_year(ts: i64) -> u64 {
@@ -77,10 +91,7 @@ impl SearchIndex {
             .unwrap_or(2024)
     }
 
-    pub fn index_document(&mut self, record: &FileRecord, tags: &[String]) -> Result<()> {
-        // Delete existing entry for this file (update = delete + add)
-        self.writer.delete_term(Term::from_field_text(self.id_field, &record.id));
-
+    pub fn index_document(&mut self, record: &FileRecord, tags: &[String], description: Option<&str>) -> Result<()> {
         let mut doc = TantivyDocument::default();
         doc.add_text(self.id_field, &record.id);
         doc.add_text(self.name_field, &record.name);
@@ -91,6 +102,9 @@ impl SearchIndex {
             doc.add_text(self.tags_field, tag);
         }
         doc.add_u64(self.year_field, Self::timestamp_to_year(record.created_at));
+        if let Some(desc) = description {
+            doc.add_text(self.description_field, desc);
+        }
 
         self.writer.add_document(doc)?;
         self.writer.commit()?;
@@ -131,6 +145,16 @@ impl SearchIndex {
             .map(|(t,)| t)
             .collect();
 
+            let desc_key = format!("desc:{}", file.hash_sha256);
+            let description: Option<String> = sqlx::query_scalar(
+                "SELECT response FROM ai_cache WHERE hash_sha256 = ? AND expires_at > ?"
+            )
+            .bind(&desc_key)
+            .bind(chrono::Utc::now().timestamp())
+            .fetch_optional(pool)
+            .await
+            .unwrap_or(None);
+
             let mut doc = TantivyDocument::default();
             doc.add_text(self.id_field, &file.id);
             doc.add_text(self.name_field, &file.name);
@@ -141,6 +165,9 @@ impl SearchIndex {
                 doc.add_text(self.tags_field, tag);
             }
             doc.add_u64(self.year_field, Self::timestamp_to_year(file.created_at));
+            if let Some(ref desc) = description {
+                doc.add_text(self.description_field, desc.as_str());
+            }
             self.writer.add_document(doc)?;
         }
 
@@ -158,7 +185,7 @@ impl SearchIndex {
         let searcher = self.reader.searcher();
         let query_parser = QueryParser::for_index(
             &self.index,
-            vec![self.name_field, self.subcategory_field, self.tags_field],
+            vec![self.name_field, self.subcategory_field, self.tags_field, self.description_field],
         );
 
         let parsed = query_parser.parse_query(query).unwrap_or_else(|_| {
@@ -216,7 +243,7 @@ mod tests {
     fn test_index_and_search_finds_document() {
         let mut idx = SearchIndex::in_memory().unwrap();
         let record = make_test_record("file-1", "rapport_annuel.pdf", "document", "Factures", 1704067200);
-        idx.index_document(&record, &["facture".to_string()]).unwrap();
+        idx.index_document(&record, &["facture".to_string()], None).unwrap();
         let results = idx.search("rapport", 10, None).unwrap();
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].id, "file-1");
@@ -226,7 +253,7 @@ mod tests {
     fn test_delete_document_removes_from_search() {
         let mut idx = SearchIndex::in_memory().unwrap();
         let record = make_test_record("file-2", "old_file.pdf", "document", "Divers", 1704067200);
-        idx.index_document(&record, &[]).unwrap();
+        idx.index_document(&record, &[], None).unwrap();
         // Verify document IS found before deletion
         let before = idx.search("old", 10, None).unwrap(); // use "old" which is a single token
         assert_eq!(before.len(), 1, "Document should be found before deletion");
@@ -240,8 +267,8 @@ mod tests {
         let mut idx = SearchIndex::in_memory().unwrap();
         let r1 = make_test_record("file-3", "photo_vacances.jpg", "photo", "Vacances", 1704067200);
         let r2 = make_test_record("file-4", "doc_vacances.pdf", "document", "Divers", 1704067200);
-        idx.index_document(&r1, &[]).unwrap();
-        idx.index_document(&r2, &[]).unwrap();
+        idx.index_document(&r1, &[], None).unwrap();
+        idx.index_document(&r2, &[], None).unwrap();
         let results = idx.search("vacances", 10, Some("photo")).unwrap();
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].id, "file-3");
@@ -256,6 +283,16 @@ mod tests {
         idx.rebuild_from_db(&pool).await.unwrap();
         let results = idx.search("anything", 10, None).unwrap();
         assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_description_field_indexed_and_searchable() {
+        let mut idx = SearchIndex::in_memory().unwrap();
+        let record = make_test_record("file-desc", "contrat_2023.pdf", "document", "Contrats", 1704067200);
+        idx.index_document(&record, &[], Some("Contrat de prestation de service signé en 2023.")).unwrap();
+        let results = idx.search("prestation", 10, None).unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].id, "file-desc");
     }
 
     fn make_test_record(id: &str, name: &str, category: &str, subcategory: &str, ts: i64) -> FileRecord {
