@@ -2,6 +2,7 @@ use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
+use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ExportFilters {
@@ -12,26 +13,61 @@ pub struct ExportFilters {
 }
 
 pub async fn build_csv(filters: &ExportFilters, pool: &SqlitePool) -> Result<String> {
-    let mut conditions = vec!["is_organized = 1".to_string()];
-    if let Some(ref cat) = filters.category {
-        conditions.push(format!("category = '{}'", cat.replace('\'', "''")));
-    }
+    // Build date conditions (i64 comparisons — no injection risk)
+    let mut date_conditions = vec!["is_organized = 1".to_string()];
     if let Some(from) = filters.date_from {
-        conditions.push(format!("modified_at >= {}", from));
+        date_conditions.push(format!("modified_at >= {}", from));
     }
     if let Some(to) = filters.date_to {
-        conditions.push(format!("modified_at <= {}", to));
+        date_conditions.push(format!("modified_at <= {}", to));
     }
+    let date_where = date_conditions.join(" AND ");
 
-    let where_clause = conditions.join(" AND ");
-    let sql = format!(
-        "SELECT id, path, name, extension, size_bytes, hash_sha256, created_at, modified_at, \
-         indexed_at, category, subcategory, confidence, classifier, is_duplicate, duplicate_of, \
-         is_organized, source_dir FROM files WHERE {} ORDER BY modified_at DESC LIMIT 10000",
-        where_clause
+    // Use parameterized query for category (user string — injection risk)
+    let sql_base = format!(
+        "SELECT id, name, path, category, subcategory, size_bytes, modified_at, confidence \
+         FROM files WHERE {}",
+        date_where
     );
 
-    let rows = sqlx::query(&sql).fetch_all(pool).await?;
+    let rows: Vec<sqlx::sqlite::SqliteRow> = if let Some(ref cat) = filters.category {
+        let sql = format!("{} AND category = ? ORDER BY modified_at DESC LIMIT 10000", sql_base);
+        sqlx::query(&sql).bind(cat).fetch_all(pool).await?
+    } else {
+        let sql = format!("{} ORDER BY modified_at DESC LIMIT 10000", sql_base);
+        sqlx::query(&sql).fetch_all(pool).await?
+    };
+
+    // Collect all file IDs for batch tag lookup
+    let file_ids: Vec<String> = rows
+        .iter()
+        .map(|row| {
+            use sqlx::Row;
+            row.try_get::<String, _>("id").unwrap_or_default()
+        })
+        .collect();
+
+    // Fetch all tags in one query (batch — avoids N+1)
+    let mut tags_map: HashMap<String, Vec<String>> = HashMap::new();
+    if !file_ids.is_empty() {
+        // file_ids are UUIDs generated internally — no injection risk; formatting is acceptable
+        let placeholders: String = file_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+        let tags_sql = format!(
+            "SELECT file_id, tag FROM tags WHERE file_id IN ({}) ORDER BY weight DESC",
+            placeholders
+        );
+        let mut q = sqlx::query(&tags_sql);
+        for id in &file_ids {
+            q = q.bind(id);
+        }
+        let tag_rows = q.fetch_all(pool).await.unwrap_or_default();
+        for tag_row in tag_rows {
+            use sqlx::Row;
+            let fid: String = tag_row.try_get("file_id").unwrap_or_default();
+            let tag: String = tag_row.try_get("tag").unwrap_or_default();
+            tags_map.entry(fid).or_default().push(tag);
+        }
+    }
 
     let mut csv = String::from("name,path,category,subcategory,tags,size_bytes,modified_at,confidence\n");
 
@@ -46,15 +82,15 @@ pub async fn build_csv(filters: &ExportFilters, pool: &SqlitePool) -> Result<Str
         let modified_at: i64 = row.try_get("modified_at").unwrap_or(0);
         let confidence: Option<f64> = row.try_get("confidence").unwrap_or(None);
 
-        let tags: Vec<String> = sqlx::query_scalar::<_, String>(
-            "SELECT tag FROM tags WHERE file_id = ? ORDER BY weight DESC"
-        )
-        .bind(&file_id)
-        .fetch_all(pool)
-        .await
-        .unwrap_or_default();
+        // Fix 4: tag filtering — skip rows that don't match any requested tag
+        if !filters.tags.is_empty() {
+            let file_tags = tags_map.get(&file_id).map(|t| t.as_slice()).unwrap_or(&[]);
+            if !filters.tags.iter().any(|ft| file_tags.contains(ft)) {
+                continue;
+            }
+        }
 
-        let tags_str = tags.join("|");
+        let tags_str = tags_map.get(&file_id).map(|t| t.join("|")).unwrap_or_default();
         let conf_str = confidence.map(|c| format!("{:.2}", c)).unwrap_or_default();
 
         csv.push_str(&format!(
@@ -79,6 +115,14 @@ fn csv_escape(s: &str) -> String {
     } else {
         s.to_string()
     }
+}
+
+/// Escape HTML/SVG special characters to prevent injection
+fn html_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+     .replace('<', "&lt;")
+     .replace('>', "&gt;")
+     .replace('"', "&quot;")
 }
 
 pub async fn build_report(pool: &SqlitePool) -> Result<String> {
@@ -128,9 +172,10 @@ pub async fn build_report(pool: &SqlitePool) -> Result<String> {
         let w = (count * bar_width) / max_count;
         let mid_y = y + bar_height / 2;
         let text_x = 100 + w + 6;
+        let cat_escaped = html_escape(cat);
         bars.push_str(&format!(
             "<rect x=\"100\" y=\"{y}\" width=\"{w}\" height=\"{bar_height}\" fill=\"{color_bar}\" rx=\"3\"/>\n\
-             <text x=\"95\" y=\"{mid_y}\" font-size=\"11\" fill=\"{color_label}\" text-anchor=\"end\" dominant-baseline=\"middle\">{cat}</text>\n\
+             <text x=\"95\" y=\"{mid_y}\" font-size=\"11\" fill=\"{color_label}\" text-anchor=\"end\" dominant-baseline=\"middle\">{cat_escaped}</text>\n\
              <text x=\"{text_x}\" y=\"{mid_y}\" font-size=\"10\" fill=\"{color_bar}\" dominant-baseline=\"middle\">{count}</text>\n"
         ));
     }
@@ -143,14 +188,16 @@ pub async fn build_report(pool: &SqlitePool) -> Result<String> {
                 .format("%d/%m/%Y %H:%M")
                 .to_string();
             let path_str = path.as_deref().unwrap_or("—");
-            format!("<tr><td>{dt}</td><td>{atype}</td><td title=\"{path_str}\">{}</td></tr>",
-                path_str.rsplit('/').next().unwrap_or(path_str))
+            format!("<tr><td>{dt}</td><td>{}</td><td title=\"{}\">{}</td></tr>",
+                html_escape(atype),
+                html_escape(path_str),
+                html_escape(path_str.rsplit('/').next().unwrap_or(path_str)))
         })
         .collect();
 
     let tag_rows: String = top_tags
         .iter()
-        .map(|(tag, cnt)| format!("<tr><td>{tag}</td><td>{cnt}</td></tr>"))
+        .map(|(tag, cnt)| format!("<tr><td>{}</td><td>{cnt}</td></tr>", html_escape(tag)))
         .collect();
 
     let html = format!(r#"<!DOCTYPE html>
