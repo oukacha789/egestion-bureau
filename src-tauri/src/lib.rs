@@ -5,7 +5,6 @@ pub mod events;
 
 use crate::engine::{
     classifier::classify_file,
-    embeddings::generate_description,
     indexer::index_file,
     organizer::organize_file,
     search::SearchIndex,
@@ -41,6 +40,7 @@ pub fn run() {
             commands::add_tag,
             commands::remove_tag,
             commands::read_text_preview,
+            commands::ask_assistant,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
@@ -119,6 +119,7 @@ async fn start_pipeline(
                                     Ok(classification) => {
                                         match organize_file(&record, &classification, &pool_clone, &event_tx_clone).await {
                                             Ok(Some(action)) => {
+                                                // Index organized file in Tantivy
                                                 let tags: Vec<String> = sqlx::query_as::<_, (String,)>(
                                                     "SELECT tag FROM tags WHERE file_id = ?"
                                                 )
@@ -136,25 +137,9 @@ async fn start_pipeline(
                                                 indexed_record.category = Some(classification.category.clone());
                                                 indexed_record.subcategory = classification.subcategory.clone();
 
-                                                let description = if classification.confidence >= 0.5 {
-                                                    generate_description(
-                                                        &record.hash_sha256,
-                                                        &record.name,
-                                                        &classification.category,
-                                                        classification.subcategory.as_deref(),
-                                                        &tags,
-                                                        api_key_clone.as_ref(),
-                                                        pool_clone.as_ref(),
-                                                    )
-                                                    .await
-                                                    .ok()
-                                                } else {
-                                                    None
-                                                };
-
                                                 match search_index.lock() {
                                                     Ok(mut idx) => {
-                                                        if let Err(e) = idx.index_document(&indexed_record, &tags, description.as_deref()) {
+                                                        if let Err(e) = idx.index_document(&indexed_record, &tags, None) {
                                                             tracing::error!("Search index error: {}", e);
                                                         }
                                                     }

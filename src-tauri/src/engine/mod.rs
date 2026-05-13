@@ -1,3 +1,4 @@
+pub mod assistant;
 pub mod classifier;
 pub mod embeddings;
 pub mod indexer;
