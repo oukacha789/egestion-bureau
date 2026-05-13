@@ -1,4 +1,5 @@
-import { LayoutDashboard, FolderOpen, Folder } from 'lucide-react';
+import { LayoutDashboard, FolderOpen, Folder, FolderClosed } from 'lucide-react';
+import { useAppStore } from '../../store';
 
 interface SidebarProps {
   currentView: string;
@@ -6,36 +7,85 @@ interface SidebarProps {
 }
 
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard',  icon: LayoutDashboard },
-  { id: 'explorer',  label: 'Explorer',   icon: Folder },
-  { id: 'unsorted',  label: 'À valider',  icon: FolderOpen },
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'explorer',  label: 'Explorer',  icon: Folder },
+  { id: 'unsorted',  label: 'À valider', icon: FolderOpen },
 ];
 
 export function Sidebar({ currentView, onNavigate }: SidebarProps) {
+  const { isWatching, watchedDirs, stats } = useAppStore();
+  const unsortedCount = Math.max(0, stats.total_files - stats.organized_files);
+
   return (
     <div className="w-48 bg-bx-900 border-r border-bx-800 flex flex-col py-4">
-      <div className="px-4 mb-6">
-        <h1 className="text-sm font-bold text-zinc-100 tracking-tight">Egestion</h1>
+
+      {/* ── Logo ───────────────────────────────────────────────── */}
+      <div className="px-3.5 pb-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 bg-gradient-to-br from-bx-600 to-bx-800 rounded-lg flex items-center justify-center text-[13px] font-bold text-zinc-100 shrink-0 select-none">
+            E
+          </div>
+          <div>
+            <p className="text-[13px] font-bold text-zinc-100 leading-tight tracking-tight">Egestion</p>
+            <p className="text-[9px] text-zinc-600">v0.1.0</p>
+          </div>
+        </div>
       </div>
-      <nav className="flex-1 px-2 space-y-1">
+
+      {/* ── Carte statut ───────────────────────────────────────── */}
+      <div className="mx-2 mb-3 bg-[#2a0f1a] border border-bx-800 rounded-lg p-2.5">
+        <p className="text-[8px] font-semibold uppercase tracking-[1.5px] text-zinc-600 mb-1.5">
+          Dossiers surveillés
+        </p>
+        <div className="flex flex-col gap-1 mb-2">
+          {watchedDirs.length > 0 ? (
+            watchedDirs.map((dir) => (
+              <div key={dir} className="flex items-center gap-1.5 text-[10px] text-zinc-400">
+                <FolderClosed size={10} className="opacity-50 shrink-0" />
+                {dir}
+              </div>
+            ))
+          ) : (
+            <div className="text-[10px] text-zinc-600">—</div>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isWatching ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
+          <span className={`text-[9px] font-medium ${isWatching ? 'text-emerald-400' : 'text-zinc-600'}`}>
+            {isWatching ? 'Surveillance active' : 'Inactive'}
+          </span>
+        </div>
+      </div>
+
+      {/* ── Nav ────────────────────────────────────────────────── */}
+      <nav className="flex-1 px-2 flex flex-col gap-0.5">
         {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => onNavigate(id)}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] transition-colors ${
               currentView === id
                 ? 'bg-bx-600 text-zinc-100'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-bx-800'
+                : 'text-zinc-500 hover:text-zinc-200 hover:bg-bx-800'
             }`}
           >
-            <Icon size={15} />
-            {label}
+            <Icon size={13} />
+            <span>{label}</span>
+            {id === 'unsorted' && unsortedCount > 0 && (
+              <span className="ml-auto text-[9px] font-semibold bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded-full">
+                {unsortedCount}
+              </span>
+            )}
           </button>
         ))}
       </nav>
-      <div className="px-4 pt-2 border-t border-bx-800">
-        <p className="text-xs text-zinc-600">⌘K pour chercher</p>
+
+      {/* ── Footer ─────────────────────────────────────────────── */}
+      <div className="px-3.5 pt-2 border-t border-bx-800 flex items-center justify-between">
+        <p className="text-[10px] text-zinc-700">⌘K chercher</p>
+        <kbd className="text-[9px] text-zinc-700 bg-bx-800 border border-bx-700 rounded px-1.5 py-0.5">K</kbd>
       </div>
+
     </div>
   );
 }
