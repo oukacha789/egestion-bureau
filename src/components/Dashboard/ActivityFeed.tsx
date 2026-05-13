@@ -44,10 +44,11 @@ function ActivityRow({ item }: { item: ActivityItem }) {
   );
 }
 
-export function ActivityFeed() {
+export function ActivityFeed({ limit }: { limit?: number } = {}) {
   const activity = useAppStore((s) => s.activity);
+  const items = limit ? activity.slice(0, limit) : activity;
 
-  if (activity.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-zinc-600">
         <p className="text-sm">Aucune activité récente</p>
@@ -58,7 +59,7 @@ export function ActivityFeed() {
 
   return (
     <div className="divide-y divide-zinc-800">
-      {activity.map((item) => (
+      {items.map((item) => (
         <ActivityRow key={item.action_id} item={item} />
       ))}
     </div>
