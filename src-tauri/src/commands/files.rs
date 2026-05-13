@@ -248,3 +248,43 @@ pub async fn open_in_finder(path: String) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
     Ok(())
 }
+
+#[tauri::command]
+pub async fn read_text_preview(path: String) -> Result<String, String> {
+    use std::io::Read;
+    let mut file = std::fs::File::open(&path).map_err(|e| e.to_string())?;
+    let mut buf = vec![0u8; 2000];
+    let n = file.read(&mut buf).map_err(|e| e.to_string())?;
+    buf.truncate(n);
+    Ok(String::from_utf8_lossy(&buf).into_owned())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_read_text_preview_returns_content() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("test.txt");
+        std::fs::write(&path, "hello world").unwrap();
+        let result = read_text_preview(path.to_str().unwrap().to_string()).await;
+        assert_eq!(result.unwrap(), "hello world");
+    }
+
+    #[tokio::test]
+    async fn test_read_text_preview_truncates_at_2000() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("big.txt");
+        let content = "x".repeat(5000);
+        std::fs::write(&path, &content).unwrap();
+        let result = read_text_preview(path.to_str().unwrap().to_string()).await;
+        assert_eq!(result.unwrap().len(), 2000);
+    }
+
+    #[tokio::test]
+    async fn test_read_text_preview_missing_file_returns_err() {
+        let result = read_text_preview("/tmp/does_not_exist_xyz.txt".to_string()).await;
+        assert!(result.is_err());
+    }
+}

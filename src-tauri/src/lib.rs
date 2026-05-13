@@ -39,6 +39,7 @@ pub fn run() {
             commands::get_tags,
             commands::add_tag,
             commands::remove_tag,
+            commands::read_text_preview,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
