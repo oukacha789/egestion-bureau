@@ -57,6 +57,7 @@ pub fn run() {
             commands::create_rule,
             commands::delete_rule,
             commands::toggle_rule,
+            commands::update_rule,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
