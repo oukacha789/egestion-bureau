@@ -81,6 +81,39 @@ pub async fn toggle_rule(id: String, state: State<'_, AppState>) -> Result<RuleR
     .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+pub async fn update_rule(
+    id: String,
+    name: String,
+    condition_type: String,
+    condition_value: String,
+    target_dir: String,
+    auto_tag: Option<String>,
+    state: State<'_, AppState>,
+) -> Result<RuleRecord, String> {
+    sqlx::query(
+        "UPDATE rules SET name=?, condition_type=?, condition_value=?, target_dir=?, auto_tag=? WHERE id=?"
+    )
+    .bind(&name)
+    .bind(&condition_type)
+    .bind(&condition_value)
+    .bind(&target_dir)
+    .bind(&auto_tag)
+    .bind(&id)
+    .execute(&state.pool)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    sqlx::query_as::<_, RuleRecord>(
+        "SELECT id, name, condition_type, condition_value, target_dir, auto_tag, priority, enabled, created_at
+         FROM rules WHERE id = ?"
+    )
+    .bind(&id)
+    .fetch_one(&state.pool)
+    .await
+    .map_err(|e| e.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -177,5 +210,49 @@ mod tests {
             .unwrap();
 
         assert!(!enabled);
+    }
+
+    #[tokio::test]
+    async fn test_update_rule() {
+        let pool = make_db().await;
+        let id = Uuid::new_v4().to_string();
+        let now = Utc::now().timestamp();
+        sqlx::query(
+            "INSERT INTO rules (id, name, condition_type, condition_value, target_dir, auto_tag, priority, enabled, created_at)
+             VALUES (?, 'Figma', 'extension', 'fig', '~/Design', NULL, 0, 1, ?)"
+        )
+        .bind(&id)
+        .bind(now)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        // Simuler un update direct (la commande Tauri wrap ceci)
+        sqlx::query(
+            "UPDATE rules SET name=?, condition_type=?, condition_value=?, target_dir=?, auto_tag=? WHERE id=?"
+        )
+        .bind("Figma v2")
+        .bind("name_contains")
+        .bind("figma")
+        .bind("~/Projets/Design")
+        .bind(Some("design"))
+        .bind(&id)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let rule: RuleRecord = sqlx::query_as(
+            "SELECT id, name, condition_type, condition_value, target_dir, auto_tag, priority, enabled, created_at FROM rules WHERE id = ?"
+        )
+        .bind(&id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
+        assert_eq!(rule.name, "Figma v2");
+        assert_eq!(rule.condition_type, "name_contains");
+        assert_eq!(rule.condition_value, "figma");
+        assert_eq!(rule.target_dir, "~/Projets/Design");
+        assert_eq!(rule.auto_tag, Some("design".to_string()));
     }
 }
