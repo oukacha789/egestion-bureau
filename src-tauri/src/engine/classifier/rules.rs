@@ -30,6 +30,7 @@ const EXTENSION_MAP: &[(&str, &str)] = &[
     ("rs", "code"), ("py", "code"), ("js", "code"), ("ts", "code"),
     ("go", "code"), ("java", "code"), ("cpp", "code"), ("c", "code"),
     ("sh", "code"), ("rb", "code"), ("swift", "code"),
+    ("eml", "email"), ("msg", "email"), ("mbox", "email"), ("emlx", "email"),
 ];
 
 const FILENAME_PATTERNS: &[(&str, &str, &str)] = &[
@@ -46,6 +47,9 @@ const FILENAME_PATTERNS: &[(&str, &str, &str)] = &[
     ("vlc-", "video", "Personnelles"),
     ("setup", "installer", ""),
     ("install", "installer", ""),
+    ("gmail",       "email", "Gmail"),
+    ("outlook",     "email", "Outlook"),
+    ("thunderbird", "email", "Thunderbird"),
 ];
 
 pub fn classify_by_rules(path: &str, name: &str) -> Option<ClassificationResult> {
@@ -130,5 +134,58 @@ mod tests {
     fn test_classify_music() {
         let result = classify_by_rules("/path/song.flac", "song.flac").unwrap();
         assert_eq!(result.category, "music");
+    }
+
+    #[test]
+    fn test_classify_eml_by_extension() {
+        let result = classify_by_rules("/path/file.eml", "file.eml").unwrap();
+        assert_eq!(result.category, "email");
+        assert_eq!(result.confidence, 0.95);
+        assert_eq!(result.subcategory, None);
+    }
+
+    #[test]
+    fn test_classify_msg_by_extension() {
+        let result = classify_by_rules("/path/file.msg", "file.msg").unwrap();
+        assert_eq!(result.category, "email");
+        assert_eq!(result.confidence, 0.95);
+    }
+
+    #[test]
+    fn test_classify_mbox_by_extension() {
+        let result = classify_by_rules("/path/archive.mbox", "archive.mbox").unwrap();
+        assert_eq!(result.category, "email");
+        assert_eq!(result.confidence, 0.95);
+    }
+
+    #[test]
+    fn test_classify_emlx_by_extension() {
+        let result = classify_by_rules("/path/message.emlx", "message.emlx").unwrap();
+        assert_eq!(result.category, "email");
+        assert_eq!(result.confidence, 0.95);
+    }
+
+    #[test]
+    fn test_classify_gmail_pattern_wins_over_extension() {
+        let result = classify_by_rules("/path/gmail_export.mbox", "gmail_export.mbox").unwrap();
+        assert_eq!(result.category, "email");
+        assert_eq!(result.subcategory, Some("Gmail".to_string()));
+        assert_eq!(result.confidence, 0.85);
+    }
+
+    #[test]
+    fn test_classify_outlook_pattern() {
+        let result = classify_by_rules("/path/outlook_backup.msg", "outlook_backup.msg").unwrap();
+        assert_eq!(result.category, "email");
+        assert_eq!(result.subcategory, Some("Outlook".to_string()));
+        assert_eq!(result.confidence, 0.85);
+    }
+
+    #[test]
+    fn test_classify_thunderbird_pattern() {
+        let result = classify_by_rules("/path/thunderbird_export.mbox", "thunderbird_export.mbox").unwrap();
+        assert_eq!(result.category, "email");
+        assert_eq!(result.subcategory, Some("Thunderbird".to_string()));
+        assert_eq!(result.confidence, 0.85);
     }
 }
