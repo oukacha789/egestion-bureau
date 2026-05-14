@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Plus, Trash2, Pause, Play, SlidersHorizontal } from 'lucide-react';
+import { Plus, Trash2, Pause, Play, SlidersHorizontal, Pencil } from 'lucide-react';
 import { useAppStore, RuleRecord } from '../../store';
 
 const CONDITION_TYPES = [
@@ -19,6 +19,14 @@ export function RulesView() {
   const { rules, setRules, addRule, removeRule, updateRule } = useAppStore();
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({
+    name: '',
+    condition_type: 'extension',
+    condition_value: '',
+    target_dir: '',
+    auto_tag: '',
+  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
     name: '',
     condition_type: 'extension',
     condition_value: '',
@@ -68,6 +76,36 @@ export function RulesView() {
     }
   }
 
+  function handleEdit(rule: RuleRecord) {
+    setEditingId(rule.id);
+    setCreating(false);
+    setEditForm({
+      name: rule.name,
+      condition_type: rule.condition_type,
+      condition_value: rule.condition_value,
+      target_dir: rule.target_dir,
+      auto_tag: rule.auto_tag ?? '',
+    });
+  }
+
+  async function handleUpdate() {
+    if (!editingId) return;
+    try {
+      const updated = await invoke<RuleRecord>('update_rule', {
+        id: editingId,
+        name: editForm.name.trim(),
+        condition_type: editForm.condition_type,
+        condition_value: editForm.condition_value.trim(),
+        target_dir: editForm.target_dir.trim(),
+        auto_tag: editForm.auto_tag.trim() || null,
+      });
+      updateRule(updated);
+      setEditingId(null);
+    } catch (err) {
+      console.error('update_rule error:', err);
+    }
+  }
+
   return (
     <div className="flex flex-col h-full p-6 overflow-y-auto">
 
@@ -100,54 +138,136 @@ export function RulesView() {
 
       {/* Rules list */}
       <div className="flex flex-col gap-2 mb-4">
-        {rules.map((rule) => (
-          <div
-            key={rule.id}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors ${
-              rule.enabled
-                ? 'bg-bx-900 border-bx-800'
-                : 'bg-bx-950 border-bx-900 opacity-50'
-            }`}
-          >
+        {rules.map((rule) =>
+          rule.id === editingId ? (
+            /* ── Mode édition inline ── */
             <div
-              className={`w-2 h-2 rounded-full shrink-0 ${
-                rule.enabled ? 'bg-emerald-400' : 'bg-zinc-600'
-              }`}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-zinc-200 truncate">{rule.name}</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                <span className="bg-indigo-900/50 text-indigo-300 px-1.5 py-0.5 rounded">
-                  {CONDITION_TYPES.find((c) => c.value === rule.condition_type)?.label}{' '}
-                  "{rule.condition_value}"
-                </span>
-                <span>→</span>
-                <span className="text-zinc-400 font-mono truncate">{rule.target_dir}</span>
-                {rule.auto_tag && (
-                  <span className="bg-emerald-900/30 text-emerald-400 px-1.5 py-0.5 rounded">
-                    #{rule.auto_tag}
-                  </span>
-                )}
+              key={rule.id}
+              className="border border-dashed border-amber-700/50 rounded-xl p-4 bg-bx-900/40"
+            >
+              <p className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider mb-3">
+                Modifier la règle
               </p>
+              <div className="flex flex-col gap-2">
+                <input
+                  placeholder="Nom de la règle"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                />
+                <div className="flex gap-2 items-center">
+                  <span className="text-[10px] text-zinc-500 shrink-0 w-4">Si</span>
+                  <select
+                    value={editForm.condition_type}
+                    onChange={(e) => setEditForm({ ...editForm, condition_type: e.target.value })}
+                    className="bg-bx-800 border border-bx-700 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-500"
+                  >
+                    {CONDITION_TYPES.map((ct) => (
+                      <option key={ct.value} value={ct.value}>{ct.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    placeholder={CONDITION_PLACEHOLDERS[editForm.condition_type]}
+                    value={editForm.condition_value}
+                    onChange={(e) => setEditForm({ ...editForm, condition_value: e.target.value })}
+                    className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div className="flex gap-2 items-center">
+                  <span className="text-[10px] text-zinc-500 shrink-0 w-4">→</span>
+                  <input
+                    placeholder="Dossier cible"
+                    value={editForm.target_dir}
+                    onChange={(e) => setEditForm({ ...editForm, target_dir: e.target.value })}
+                    className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 font-mono focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div className="flex gap-2 items-center">
+                  <span className="text-[10px] text-zinc-500 shrink-0 w-4">#</span>
+                  <input
+                    placeholder="Tag automatique (optionnel)"
+                    value={editForm.auto_tag}
+                    onChange={(e) => setEditForm({ ...editForm, auto_tag: e.target.value })}
+                    className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div className="flex gap-2 justify-end mt-1">
+                  <button
+                    onClick={() => setEditingId(null)}
+                    className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleUpdate}
+                    disabled={!editForm.name.trim() || !editForm.condition_value.trim() || !editForm.target_dir.trim()}
+                    className="px-3 py-1.5 text-xs bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-900 font-medium rounded-lg transition-colors"
+                  >
+                    Sauvegarder
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-1 shrink-0">
-              <button
-                onClick={() => handleToggle(rule.id)}
-                title={rule.enabled ? 'Désactiver' : 'Activer'}
-                className="p-1.5 text-zinc-500 hover:text-zinc-200 hover:bg-bx-800 rounded-lg transition-colors"
-              >
-                {rule.enabled ? <Pause size={11} /> : <Play size={11} />}
-              </button>
-              <button
-                onClick={() => handleDelete(rule.id)}
-                title="Supprimer"
-                className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-900/20 rounded-lg transition-colors"
-              >
-                <Trash2 size={11} />
-              </button>
+          ) : (
+            /* ── Mode affichage normal ── */
+            <div
+              key={rule.id}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors ${
+                rule.enabled
+                  ? 'bg-bx-900 border-bx-800'
+                  : 'bg-bx-950 border-bx-900 opacity-50'
+              }`}
+            >
+              <div
+                className={`w-2 h-2 rounded-full shrink-0 ${
+                  rule.enabled ? 'bg-emerald-400' : 'bg-zinc-600'
+                }`}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-zinc-200 truncate">{rule.name}</p>
+                <p className="text-[10px] text-zinc-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                  <span className="bg-indigo-900/50 text-indigo-300 px-1.5 py-0.5 rounded">
+                    {CONDITION_TYPES.find((c) => c.value === rule.condition_type)?.label}{' '}
+                    "{rule.condition_value}"
+                  </span>
+                  <span>→</span>
+                  <span className="text-zinc-400 font-mono truncate">{rule.target_dir}</span>
+                  {rule.auto_tag && (
+                    <span className="bg-emerald-900/30 text-emerald-400 px-1.5 py-0.5 rounded">
+                      #{rule.auto_tag}
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                <button
+                  onClick={() => handleEdit(rule)}
+                  disabled={editingId !== null || creating}
+                  title="Modifier"
+                  className="p-1.5 text-zinc-500 hover:text-amber-400 hover:bg-amber-900/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
+                >
+                  <Pencil size={11} />
+                </button>
+                <button
+                  onClick={() => handleToggle(rule.id)}
+                  disabled={editingId !== null}
+                  title={rule.enabled ? 'Désactiver' : 'Activer'}
+                  className="p-1.5 text-zinc-500 hover:text-zinc-200 hover:bg-bx-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
+                >
+                  {rule.enabled ? <Pause size={11} /> : <Play size={11} />}
+                </button>
+                <button
+                  onClick={() => handleDelete(rule.id)}
+                  disabled={editingId !== null}
+                  title="Supprimer"
+                  className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-900/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
+                >
+                  <Trash2 size={11} />
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        )}
       </div>
 
       {/* Inline creation form */}
