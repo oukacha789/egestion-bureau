@@ -5,10 +5,11 @@ pub mod events;
 
 use crate::engine::{
     classifier::classify_file,
+    config::AppConfig,
     indexer::index_file,
     organizer::organize_file,
     search::SearchIndex,
-    watcher::{default_watch_dirs, FsWatcher},
+    watcher::FsWatcher,
 };
 use crate::events::AppEvent;
 use sqlx::SqlitePool;
@@ -19,6 +20,8 @@ use tracing::info;
 pub struct AppState {
     pub pool: SqlitePool,
     pub search_index: Arc<Mutex<SearchIndex>>,
+    pub watcher: Arc<Mutex<crate::engine::watcher::FsWatcher>>,
+    pub app_data_dir: std::path::PathBuf,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -44,6 +47,10 @@ pub fn run() {
             commands::export_csv,
             commands::export_report,
             commands::get_watch_dirs,
+            commands::get_prefs,
+            commands::set_watch_dirs,
+            commands::add_watch_dir,
+            commands::remove_watch_dir,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
@@ -74,13 +81,23 @@ pub fn run() {
 
             let search_index = Arc::new(Mutex::new(search_index));
 
+            let config = AppConfig::load(&data_dir).unwrap_or_else(|_| AppConfig::default_config());
+
+            let (event_tx, event_rx) = tokio::sync::mpsc::channel::<AppEvent>(256);
+
+            let watcher = FsWatcher::new(event_tx.clone(), config.watch_dirs)
+                .expect("Failed to start FSWatcher");
+            let watcher = Arc::new(Mutex::new(watcher));
+
             app.manage(AppState {
                 pool: pool.clone(),
                 search_index: Arc::clone(&search_index),
+                watcher: Arc::clone(&watcher),
+                app_data_dir: data_dir.clone(),
             });
 
             let api_key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
-            tauri::async_runtime::spawn(start_pipeline(app_handle, pool, api_key, search_index));
+            tauri::async_runtime::spawn(start_pipeline(app_handle, pool, api_key, search_index, watcher, event_rx));
 
             Ok(())
         })
@@ -93,24 +110,22 @@ async fn start_pipeline(
     pool: SqlitePool,
     api_key: String,
     search_index: Arc<Mutex<SearchIndex>>,
+    watcher: Arc<Mutex<FsWatcher>>,
+    mut event_rx: tokio::sync::mpsc::Receiver<AppEvent>,
 ) {
-    let (event_tx, mut event_rx) = tokio::sync::mpsc::channel::<AppEvent>(256);
     let pool = Arc::new(pool);
     let api_key = Arc::new(api_key);
 
-    let watch_dirs = default_watch_dirs();
-    let dir_count = watch_dirs.len();
-    let watcher = FsWatcher::new(event_tx.clone(), watch_dirs).expect("Failed to start FSWatcher");
-
-    info!("Pipeline started, watching {} directories", dir_count);
+    info!("Pipeline started");
 
     let pool_clone = Arc::clone(&pool);
     let api_key_clone = Arc::clone(&api_key);
-    let event_tx_clone = event_tx.clone();
+    let (internal_tx, _) = tokio::sync::mpsc::channel::<AppEvent>(32);
+    let event_tx_clone = internal_tx.clone();
     let app_handle_clone = app_handle.clone();
 
     tokio::spawn(async move {
-        let _watcher = watcher;
+        let _fw = watcher;
         while let Some(event) = event_rx.recv().await {
             match event {
                 AppEvent::FileDetected(payload) => {

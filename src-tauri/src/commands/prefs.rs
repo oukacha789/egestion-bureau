@@ -1,0 +1,116 @@
+use crate::engine::config::AppConfig;
+use crate::AppState;
+use std::path::PathBuf;
+use tauri::State;
+
+#[tauri::command]
+pub fn get_prefs(state: State<'_, AppState>) -> Vec<String> {
+    state
+        .watcher
+        .lock()
+        .map(|fw| {
+            fw.current_dirs()
+                .iter()
+                .map(|p| p.to_string_lossy().into_owned())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+#[tauri::command]
+pub fn set_watch_dirs(
+    dirs: Vec<String>,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    let paths: Vec<PathBuf> = dirs.iter().map(PathBuf::from).collect();
+
+    let config = AppConfig { watch_dirs: paths.clone() };
+    config
+        .save(&state.app_data_dir)
+        .map_err(|e| e.to_string())?;
+
+    state
+        .watcher
+        .lock()
+        .map_err(|e| e.to_string())?
+        .set_dirs(paths)
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn add_watch_dir(
+    dir: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<String>, String> {
+    let new_path = PathBuf::from(&dir);
+
+    let mut current: Vec<PathBuf> = state
+        .watcher
+        .lock()
+        .map_err(|e| e.to_string())?
+        .current_dirs()
+        .to_vec();
+
+    if current.contains(&new_path) {
+        return Ok(current
+            .iter()
+            .map(|p| p.to_string_lossy().into_owned())
+            .collect());
+    }
+
+    current.push(new_path);
+
+    let config = AppConfig { watch_dirs: current.clone() };
+    config
+        .save(&state.app_data_dir)
+        .map_err(|e| e.to_string())?;
+
+    state
+        .watcher
+        .lock()
+        .map_err(|e| e.to_string())?
+        .set_dirs(current.clone())
+        .map_err(|e| e.to_string())?;
+
+    Ok(current
+        .iter()
+        .map(|p| p.to_string_lossy().into_owned())
+        .collect())
+}
+
+#[tauri::command]
+pub fn remove_watch_dir(
+    dir: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<String>, String> {
+    let to_remove = PathBuf::from(&dir);
+
+    let current: Vec<PathBuf> = state
+        .watcher
+        .lock()
+        .map_err(|e| e.to_string())?
+        .current_dirs()
+        .iter()
+        .filter(|p| **p != to_remove)
+        .cloned()
+        .collect();
+
+    let config = AppConfig { watch_dirs: current.clone() };
+    config
+        .save(&state.app_data_dir)
+        .map_err(|e| e.to_string())?;
+
+    state
+        .watcher
+        .lock()
+        .map_err(|e| e.to_string())?
+        .set_dirs(current.clone())
+        .map_err(|e| e.to_string())?;
+
+    Ok(current
+        .iter()
+        .map(|p| p.to_string_lossy().into_owned())
+        .collect())
+}
