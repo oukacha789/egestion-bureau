@@ -5,5 +5,6 @@ pub mod embeddings;
 pub mod export;
 pub mod indexer;
 pub mod organizer;
+pub mod rules_engine;
 pub mod search;
 pub mod watcher;
