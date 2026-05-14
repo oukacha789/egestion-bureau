@@ -1,4 +1,4 @@
-import { LayoutDashboard, FolderOpen, Folder, FolderClosed, Mail, Settings } from 'lucide-react';
+import { LayoutDashboard, FolderOpen, Folder, FolderClosed, Mail, Settings, SlidersHorizontal } from 'lucide-react';
 import { useAppStore } from '../../store';
 
 interface SidebarProps {
@@ -7,16 +7,18 @@ interface SidebarProps {
 }
 
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'explorer',  label: 'Explorer',  icon: Folder },
-  { id: 'unsorted',  label: 'À valider', icon: FolderOpen },
-  { id: 'emails',    label: 'E-mails',   icon: Mail },
+  { id: 'dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
+  { id: 'explorer',    label: 'Explorer',    icon: Folder },
+  { id: 'unsorted',    label: 'À valider',   icon: FolderOpen },
+  { id: 'emails',      label: 'E-mails',     icon: Mail },
+  { id: 'rules',       label: 'Règles',      icon: SlidersHorizontal },
   { id: 'preferences', label: 'Préférences', icon: Settings },
 ];
 
 export function Sidebar({ currentView, onNavigate }: SidebarProps) {
-  const { isWatching, watchedDirs, stats, setSelectedCategory, selectedCategory } = useAppStore();
+  const { isWatching, watchedDirs, stats, setSelectedCategory, selectedCategory, rules } = useAppStore();
   const unsortedCount = Math.max(0, stats.total_files - stats.organized_files);
+  const enabledRulesCount = rules.filter((r) => r.enabled).length;
 
   return (
     <div className="w-48 bg-bx-900 border-r border-bx-800 flex flex-col py-4">
@@ -93,6 +95,11 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
               {id === 'emails' && stats.email_files > 0 && (
                 <span className="ml-auto text-[9px] font-semibold bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded-full">
                   {stats.email_files}
+                </span>
+              )}
+              {id === 'rules' && enabledRulesCount > 0 && (
+                <span className="ml-auto text-[9px] font-semibold bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">
+                  {enabledRulesCount}
                 </span>
               )}
             </button>

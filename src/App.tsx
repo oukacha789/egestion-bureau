@@ -8,6 +8,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { useFileEvents } from './hooks/useFileEvents';
 import { useKeyboard } from './hooks/useKeyboard';
 import { PreferencesView } from './components/Preferences/PreferencesView';
+import { RulesView } from './components/Rules';
 
 function App() {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -22,6 +23,7 @@ function App() {
         {currentView === 'explorer'  && <Explorer />}
         {currentView === 'unsorted'  && <Unsorted />}
         {currentView === 'preferences' && <PreferencesView />}
+        {currentView === 'rules' && <RulesView />}
       </main>
       <CommandPalette />
       <AssistantOverlay />
