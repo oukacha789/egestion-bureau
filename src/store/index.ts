@@ -63,6 +63,18 @@ export interface AssistantMessage {
   createdAt: number;
 }
 
+export interface RuleRecord {
+  id: string;
+  name: string;
+  condition_type: 'extension' | 'name_contains' | 'source';
+  condition_value: string;
+  target_dir: string;
+  auto_tag: string | null;
+  priority: number;
+  enabled: boolean;
+  created_at: number;
+}
+
 interface AppStore {
   // Dashboard
   activity: ActivityItem[];
@@ -100,6 +112,13 @@ interface AppStore {
   setExplorerFiles: (files: FileRecord[]) => void;
   setFileMetadata: (meta: FileMetadata | null) => void;
   setExplorerSort: (sort: string) => void;
+
+  // Rules
+  rules: RuleRecord[];
+  setRules: (rules: RuleRecord[]) => void;
+  addRule: (rule: RuleRecord) => void;
+  removeRule: (id: string) => void;
+  updateRule: (rule: RuleRecord) => void;
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -136,4 +155,11 @@ export const useAppStore = create<AppStore>((set) => ({
   setExplorerFiles: (files) => set({ explorerFiles: files }),
   setFileMetadata: (meta) => set({ fileMetadata: meta }),
   setExplorerSort: (sort) => set({ explorerSort: sort }),
+
+  rules: [],
+  setRules: (rules) => set({ rules }),
+  addRule: (rule) => set((s) => ({ rules: [...s.rules, rule] })),
+  removeRule: (id) => set((s) => ({ rules: s.rules.filter((r) => r.id !== id) })),
+  updateRule: (rule) =>
+    set((s) => ({ rules: s.rules.map((r) => (r.id === rule.id ? rule : r)) })),
 }));
