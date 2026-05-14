@@ -101,6 +101,7 @@ export function RulesView() {
       });
       updateRule(updated);
       setEditingId(null);
+      setEditForm({ name: '', condition_type: 'extension', condition_value: '', target_dir: '', auto_tag: '' });
     } catch (err) {
       console.error('update_rule error:', err);
     }
@@ -118,7 +119,8 @@ export function RulesView() {
         </div>
         <button
           onClick={() => setCreating(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-bx-600 hover:bg-bx-700 text-zinc-100 text-xs rounded-lg transition-colors"
+          disabled={editingId !== null}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-bx-600 hover:bg-bx-700 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-100 text-xs rounded-lg transition-colors"
         >
           <Plus size={12} />
           Nouvelle règle
@@ -193,7 +195,7 @@ export function RulesView() {
                 </div>
                 <div className="flex gap-2 justify-end mt-1">
                   <button
-                    onClick={() => setEditingId(null)}
+                    onClick={() => { setEditingId(null); setEditForm({ name: '', condition_type: 'extension', condition_value: '', target_dir: '', auto_tag: '' }); }}
                     className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
                   >
                     Annuler
