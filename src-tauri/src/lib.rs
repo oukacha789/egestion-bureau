@@ -8,6 +8,7 @@ use crate::engine::{
     config::AppConfig,
     indexer::index_file,
     organizer::organize_file,
+    rules_engine,
     search::SearchIndex,
     watcher::FsWatcher,
 };
@@ -52,6 +53,10 @@ pub fn run() {
             commands::set_watch_dirs,
             commands::add_watch_dir,
             commands::remove_watch_dir,
+            commands::get_rules,
+            commands::create_rule,
+            commands::delete_rule,
+            commands::toggle_rule,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
@@ -136,8 +141,27 @@ async fn start_pipeline(
                             if !record.is_duplicate {
                                 match classify_file(&record, &api_key_clone, &pool_clone, &event_tx_clone).await {
                                     Ok(classification) => {
-                                        match organize_file(&record, &classification, &pool_clone, &event_tx_clone).await {
+                                        let rule_match = rules_engine::evaluate(&record, pool_clone.as_ref())
+                                            .await
+                                            .unwrap_or(None);
+                                        let override_target = rule_match.as_ref().map(|m| m.target_dir.clone());
+                                        match organize_file(&record, &classification, &pool_clone, &event_tx_clone, override_target).await {
                                             Ok(Some(action)) => {
+                                                if let Some(ref rm) = rule_match {
+                                                    if let Some(ref tag) = rm.auto_tag {
+                                                        let tag_id = uuid::Uuid::new_v4().to_string();
+                                                        if let Err(e) = sqlx::query(
+                                                            "INSERT OR IGNORE INTO tags (id, file_id, tag, source, weight) VALUES (?, ?, ?, 'rule', 1.0)"
+                                                        )
+                                                        .bind(&tag_id)
+                                                        .bind(&record.id)
+                                                        .bind(tag)
+                                                        .execute(pool_clone.as_ref())
+                                                        .await {
+                                                            tracing::warn!("Failed to insert auto-tag '{}' for file {}: {}", tag, record.id, e);
+                                                        }
+                                                    }
+                                                }
                                                 // Index organized file in Tantivy
                                                 let tags: Vec<String> = sqlx::query_as::<_, (String,)>(
                                                     "SELECT tag FROM tags WHERE file_id = ?"

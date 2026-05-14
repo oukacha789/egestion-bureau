@@ -16,13 +16,18 @@ pub async fn organize_file(
     classification: &ClassificationResult,
     pool: &SqlitePool,
     event_tx: &Sender<AppEvent>,
+    override_target: Option<PathBuf>,
 ) -> Result<Option<ActionRecord>> {
-    if classification.confidence < MIN_CONFIDENCE_FOR_AUTO_ORGANIZE {
-        return Ok(None);
-    }
-
     let home = dirs::home_dir().ok_or_else(|| anyhow::anyhow!("Cannot find home dir"))?;
-    let target_dir = build_target_dir(&home, classification, record);
+    let target_dir = match override_target {
+        Some(dir) => dir,
+        None => {
+            if classification.confidence < MIN_CONFIDENCE_FOR_AUTO_ORGANIZE {
+                return Ok(None);
+            }
+            build_target_dir(&home, classification, record)
+        }
+    };
     std::fs::create_dir_all(&target_dir)?;
 
     let file_name = Path::new(&record.path)
@@ -171,6 +176,7 @@ fn resolve_conflict(path: &Path) -> PathBuf {
 mod tests {
     use super::*;
     use crate::engine::classifier::ClassificationResult;
+    use sqlx::SqlitePool;
 
     fn make_record(created_at: i64) -> FileRecord {
         FileRecord {
@@ -271,5 +277,98 @@ mod tests {
             "Expected path to end with E-mails/Divers, got: {}",
             dir.display()
         );
+    }
+
+    #[tokio::test]
+    async fn test_organize_low_confidence_no_override_returns_none() {
+        let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
+        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let src = dir.path().join("test.pdf");
+        std::fs::write(&src, b"data").unwrap();
+
+        let mut record = FileRecord {
+            id: "test-id".to_string(),
+            path: src.to_str().unwrap().to_string(),
+            name: "test.pdf".to_string(),
+            extension: Some("pdf".to_string()),
+            size_bytes: 4,
+            hash_sha256: "abc".to_string(),
+            created_at: 0,
+            modified_at: 0,
+            indexed_at: 0,
+            category: None,
+            subcategory: None,
+            confidence: None,
+            classifier: None,
+            is_duplicate: false,
+            duplicate_of: None,
+            is_organized: false,
+            source_dir: Some("desktop".to_string()),
+        };
+        let classification = ClassificationResult {
+            category: "document".to_string(),
+            subcategory: None,
+            confidence: 0.10,
+            tags: vec![],
+        };
+        let (tx, _rx) = tokio::sync::mpsc::channel(1);
+        let result = organize_file(&record, &classification, &pool, &tx, None)
+            .await
+            .unwrap();
+        assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_organize_low_confidence_with_override_moves_file() {
+        let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
+        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+        let src_dir = tempfile::tempdir().unwrap();
+        let tgt_dir = tempfile::tempdir().unwrap();
+        let src = src_dir.path().join("report.pdf");
+        std::fs::write(&src, b"data").unwrap();
+
+        sqlx::query(
+            "INSERT INTO files (id, path, name, extension, size_bytes, hash_sha256, created_at, modified_at, indexed_at, is_duplicate, is_organized)
+             VALUES ('fid', ?, 'report.pdf', 'pdf', 4, 'abc', 0, 0, 0, 0, 0)"
+        )
+        .bind(src.to_str().unwrap())
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let record = FileRecord {
+            id: "fid".to_string(),
+            path: src.to_str().unwrap().to_string(),
+            name: "report.pdf".to_string(),
+            extension: Some("pdf".to_string()),
+            size_bytes: 4,
+            hash_sha256: "abc".to_string(),
+            created_at: 0,
+            modified_at: 0,
+            indexed_at: 0,
+            category: None,
+            subcategory: None,
+            confidence: None,
+            classifier: None,
+            is_duplicate: false,
+            duplicate_of: None,
+            is_organized: false,
+            source_dir: Some("desktop".to_string()),
+        };
+        let classification = ClassificationResult {
+            category: "document".to_string(),
+            subcategory: None,
+            confidence: 0.10,
+            tags: vec![],
+        };
+        let (tx, _rx) = tokio::sync::mpsc::channel(1);
+        let override_target = Some(tgt_dir.path().to_path_buf());
+        let result = organize_file(&record, &classification, &pool, &tx, override_target)
+            .await
+            .unwrap();
+        assert!(result.is_some(), "override_target must bypass confidence check");
+        let tgt_file = tgt_dir.path().join("report.pdf");
+        assert!(tgt_file.exists(), "File must be moved to override target");
     }
 }
