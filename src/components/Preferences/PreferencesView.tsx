@@ -1,0 +1,135 @@
+import { useEffect, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
+import { FolderOpen, Plus, Trash2, Eye } from 'lucide-react';
+
+export function PreferencesView() {
+  const [dirs, setDirs] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    invoke<string[]>('get_prefs').then(setDirs).catch(console.error);
+  }, []);
+
+  function showFeedback(msg: string) {
+    setFeedback(msg);
+    setTimeout(() => setFeedback(null), 2500);
+  }
+
+  async function handleAdd() {
+    const selected = await open({
+      directory: true,
+      multiple: false,
+      title: 'Choisir un dossier à surveiller',
+    });
+
+    if (!selected || typeof selected !== 'string') return;
+
+    setLoading(true);
+    try {
+      const updated = await invoke<string[]>('add_watch_dir', { dir: selected });
+      setDirs(updated);
+      showFeedback('Dossier ajouté et surveillance active');
+    } catch (err) {
+      console.error('add_watch_dir error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRemove(dir: string) {
+    setLoading(true);
+    try {
+      const updated = await invoke<string[]>('remove_watch_dir', { dir });
+      setDirs(updated);
+      showFeedback('Dossier retiré de la surveillance');
+    } catch (err) {
+      console.error('remove_watch_dir error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto p-6">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-xl font-semibold text-zinc-100">Préférences</h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            Configurez les dossiers surveillés automatiquement par Egestion.
+          </p>
+        </div>
+
+        {/* Section dossiers surveillés */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="text-sm font-medium text-zinc-300 flex items-center gap-2">
+                <Eye size={14} className="text-zinc-500" />
+                Dossiers surveillés
+              </h2>
+              <p className="text-xs text-zinc-600 mt-0.5">
+                Les nouveaux fichiers déposés dans ces dossiers seront automatiquement classés.
+              </p>
+            </div>
+            <button
+              onClick={handleAdd}
+              disabled={loading}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 rounded-lg text-xs text-white transition-colors"
+            >
+              <Plus size={12} />
+              Ajouter un dossier
+            </button>
+          </div>
+
+          {/* Liste */}
+          <div className="space-y-2">
+            {dirs.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-10 bg-zinc-900/40 border border-dashed border-zinc-700 rounded-xl text-zinc-600">
+                <FolderOpen size={28} className="mb-2 opacity-40" />
+                <p className="text-sm">Aucun dossier surveillé</p>
+                <p className="text-xs mt-1">Cliquez sur « Ajouter un dossier » pour commencer.</p>
+              </div>
+            )}
+
+            {dirs.map((dir) => {
+              const parts = dir.replace(/\\/g, '/').split('/');
+              const name = parts[parts.length - 1] || dir;
+              const parent = parts.slice(0, -1).join('/') || '/';
+
+              return (
+                <div
+                  key={dir}
+                  className="flex items-center gap-3 px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl group"
+                >
+                  <FolderOpen size={16} className="text-indigo-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-zinc-200 truncate">{name}</p>
+                    <p className="text-xs text-zinc-600 truncate">{parent}</p>
+                  </div>
+                  <button
+                    onClick={() => handleRemove(dir)}
+                    disabled={loading}
+                    className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-600 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-all disabled:opacity-0"
+                    aria-label={`Retirer ${name}`}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Feedback toast */}
+        {feedback && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-full text-xs text-zinc-200 shadow-lg">
+            {feedback}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

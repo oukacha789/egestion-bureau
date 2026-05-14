@@ -1,4 +1,4 @@
-import { LayoutDashboard, FolderOpen, Folder, FolderClosed, Mail } from 'lucide-react';
+import { LayoutDashboard, FolderOpen, Folder, FolderClosed, Mail, Settings } from 'lucide-react';
 import { useAppStore } from '../../store';
 
 interface SidebarProps {
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { id: 'explorer',  label: 'Explorer',  icon: Folder },
   { id: 'unsorted',  label: 'À valider', icon: FolderOpen },
   { id: 'emails',    label: 'E-mails',   icon: Mail },
+  { id: 'preferences', label: 'Préférences', icon: Settings },
 ];
 
 export function Sidebar({ currentView, onNavigate }: SidebarProps) {

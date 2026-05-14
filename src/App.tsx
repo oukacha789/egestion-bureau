@@ -7,6 +7,7 @@ import { AssistantOverlay } from './components/Assistant/AssistantOverlay';
 import { Sidebar } from './components/layout/Sidebar';
 import { useFileEvents } from './hooks/useFileEvents';
 import { useKeyboard } from './hooks/useKeyboard';
+import { PreferencesView } from './components/Preferences/PreferencesView';
 
 function App() {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -20,6 +21,7 @@ function App() {
         {currentView === 'dashboard' && <Dashboard />}
         {currentView === 'explorer'  && <Explorer />}
         {currentView === 'unsorted'  && <Unsorted />}
+        {currentView === 'preferences' && <PreferencesView />}
       </main>
       <CommandPalette />
       <AssistantOverlay />
