@@ -1,5 +1,6 @@
 pub mod assistant;
 pub mod classifier;
+pub mod config;
 pub mod embeddings;
 pub mod export;
 pub mod indexer;
