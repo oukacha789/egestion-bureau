@@ -6,7 +6,8 @@ use tokio::sync::mpsc::Sender;
 use tracing::{error, info};
 
 pub struct FsWatcher {
-    _watcher: RecommendedWatcher,
+    watcher: RecommendedWatcher,
+    watched_dirs: Vec<PathBuf>,
 }
 
 impl FsWatcher {
@@ -46,7 +47,27 @@ impl FsWatcher {
             }
         }
 
-        Ok(Self { _watcher: watcher })
+        Ok(Self { watcher, watched_dirs: watch_dirs })
+    }
+
+    pub fn set_dirs(&mut self, new_dirs: Vec<PathBuf>) -> anyhow::Result<()> {
+        for dir in &self.watched_dirs {
+            let _ = self.watcher.unwatch(dir);
+        }
+        for dir in &new_dirs {
+            if dir.exists() {
+                self.watcher.watch(dir, RecursiveMode::NonRecursive)?;
+                info!("Now watching: {}", dir.display());
+            } else {
+                error!("Directory does not exist, skipping: {}", dir.display());
+            }
+        }
+        self.watched_dirs = new_dirs;
+        Ok(())
+    }
+
+    pub fn current_dirs(&self) -> &[PathBuf] {
+        &self.watched_dirs
     }
 }
 
@@ -129,5 +150,22 @@ mod tests {
             let mail_dir = documents.join("Mail");
             assert!(dirs.contains(&mail_dir), "Mail dir should be included in watch dirs");
         }
+    }
+
+    #[test]
+    fn test_set_dirs_does_not_panic_on_empty() {
+        use tokio::sync::mpsc;
+        let (tx, _rx) = mpsc::channel(8);
+        let mut fw = FsWatcher::new(tx, vec![]).unwrap();
+        fw.set_dirs(vec![]).unwrap();
+        assert!(fw.current_dirs().is_empty());
+    }
+
+    #[test]
+    fn test_current_dirs_reflects_initial_dirs() {
+        use tokio::sync::mpsc;
+        let (tx, _rx) = mpsc::channel(8);
+        let fw = FsWatcher::new(tx, vec![]).unwrap();
+        assert!(fw.current_dirs().is_empty());
     }
 }
