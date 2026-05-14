@@ -129,6 +129,10 @@ fn build_target_dir(home: &Path, classification: &ClassificationResult, record: 
         "archive" => "Archives".to_string(),
         "installer" => "Installers".to_string(),
         "code" => "Code".to_string(),
+        "email" => format!(
+            "E-mails/{}",
+            classification.subcategory.clone().unwrap_or_else(|| "Divers".to_string())
+        ),
         _ => "_Unsorted".to_string(),
     };
     base.join(category_dir)
@@ -233,5 +237,39 @@ mod tests {
     #[test]
     fn test_extract_year() {
         assert_eq!(extract_year_from_timestamp(1704067200), 2024);
+    }
+
+    #[test]
+    fn test_build_target_dir_email_gmail() {
+        let home = Path::new("/Users/test");
+        let classification = ClassificationResult {
+            category: "email".to_string(),
+            subcategory: Some("Gmail".to_string()),
+            confidence: 0.85,
+            tags: vec![],
+        };
+        let dir = build_target_dir(home, &classification, &make_record(1704067200));
+        assert!(
+            dir.to_string_lossy().ends_with("E-mails/Gmail"),
+            "Expected path to end with E-mails/Gmail, got: {}",
+            dir.display()
+        );
+    }
+
+    #[test]
+    fn test_build_target_dir_email_divers() {
+        let home = Path::new("/Users/test");
+        let classification = ClassificationResult {
+            category: "email".to_string(),
+            subcategory: None,
+            confidence: 0.95,
+            tags: vec![],
+        };
+        let dir = build_target_dir(home, &classification, &make_record(1704067200));
+        assert!(
+            dir.to_string_lossy().ends_with("E-mails/Divers"),
+            "Expected path to end with E-mails/Divers, got: {}",
+            dir.display()
+        );
     }
 }
