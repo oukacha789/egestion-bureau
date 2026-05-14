@@ -14,6 +14,7 @@ export interface StatsData {
   total_files: number;
   organized_files: number;
   duplicate_files: number;
+  email_files: number;
 }
 
 export interface SearchResult {
@@ -103,7 +104,7 @@ interface AppStore {
 
 export const useAppStore = create<AppStore>((set) => ({
   activity: [],
-  stats: { total_files: 0, organized_files: 0, duplicate_files: 0 },
+  stats: { total_files: 0, organized_files: 0, duplicate_files: 0, email_files: 0 },
   isWatching: false,
   addActivity: (item) =>
     set((state) => ({ activity: [item, ...state.activity].slice(0, 50) })),

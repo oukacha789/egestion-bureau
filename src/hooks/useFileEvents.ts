@@ -29,12 +29,12 @@ export function useFileEvents() {
         timestamp: Date.now(),
       });
 
-      invoke<{ total_files: number; organized_files: number; duplicate_files: number }>('get_stats')
+      invoke<{ total_files: number; organized_files: number; duplicate_files: number; email_files: number }>('get_stats')
         .then(setStats)
         .catch(console.error);
     });
 
-    invoke<{ total_files: number; organized_files: number; duplicate_files: number }>('get_stats')
+    invoke<{ total_files: number; organized_files: number; duplicate_files: number; email_files: number }>('get_stats')
       .then(setStats)
       .catch(console.error);
 
