@@ -95,10 +95,16 @@ pub async fn get_stats(state: State<'_, AppState>) -> Result<serde_json::Value, 
         .await
         .map_err(|e| e.to_string())?;
 
+    let emails: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM files WHERE category = 'email'")
+        .fetch_one(&state.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
     Ok(serde_json::json!({
         "total_files": total.0,
         "organized_files": organized.0,
         "duplicate_files": duplicates.0,
+        "email_files": emails.0,
     }))
 }
 

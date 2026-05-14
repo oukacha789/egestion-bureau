@@ -56,6 +56,8 @@ fn detect_source(path: &Path) -> String {
         "downloads".to_string()
     } else if path_str.contains("/desktop") {
         "desktop".to_string()
+    } else if path_str.contains("/documents/mail/") {
+        "mail".to_string()
     } else {
         "unknown".to_string()
     }
@@ -68,6 +70,11 @@ pub fn default_watch_dirs() -> Vec<PathBuf> {
     }
     if let Some(downloads) = dirs::download_dir() {
         dirs.push(downloads);
+    }
+    if let Some(documents) = dirs::document_dir() {
+        let mail_dir = documents.join("Mail");
+        let _ = std::fs::create_dir_all(&mail_dir);
+        dirs.push(mail_dir);
     }
     dirs
 }
@@ -101,5 +108,26 @@ mod tests {
         // At least Desktop or Downloads should be defined on a developer machine
         // In headless CI this may return 0 dirs — that's acceptable behavior
         let _ = dirs; // just verify it doesn't panic
+    }
+
+    #[test]
+    fn test_detect_source_mail() {
+        let path = PathBuf::from("/Users/test/Documents/Mail/export.eml");
+        assert_eq!(detect_source(&path), "mail");
+    }
+
+    #[test]
+    fn test_detect_source_documents_mailbox_is_not_mail() {
+        let path = PathBuf::from("/Users/test/Documents/Mailbox/file.eml");
+        assert_eq!(detect_source(&path), "unknown");
+    }
+
+    #[test]
+    fn test_default_watch_dirs_includes_mail() {
+        if let Some(documents) = dirs::document_dir() {
+            let dirs = default_watch_dirs();
+            let mail_dir = documents.join("Mail");
+            assert!(dirs.contains(&mail_dir), "Mail dir should be included in watch dirs");
+        }
     }
 }
