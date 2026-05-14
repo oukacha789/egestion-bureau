@@ -29,6 +29,7 @@ pub fn run() {
     tracing_subscriber::fmt::init();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             commands::get_recent_activity,
             commands::perform_undo,
