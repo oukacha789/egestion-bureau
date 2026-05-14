@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import {
-  FileText, Image, Music, Video, Archive, Code, HelpCircle,
+  FileText, Image, Music, Video, Archive, Code, HelpCircle, Mail,
 } from 'lucide-react';
 import { useAppStore, FileRecord, FileMetadata } from '../../store';
 import { FileList } from './FileList';
@@ -15,6 +15,7 @@ const CATEGORIES = [
   { id: 'document',  label: 'Documents', Icon: FileText },
   { id: 'archive',   label: 'Archives',  Icon: Archive },
   { id: 'code',      label: 'Code',      Icon: Code },
+  { id: 'email',     label: 'E-mails',   Icon: Mail },
   { id: '_unsorted', label: '_Unsorted', Icon: HelpCircle },
 ];
 

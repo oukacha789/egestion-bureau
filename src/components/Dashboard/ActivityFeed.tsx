@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { Undo2, FileText, Image, Music, Video, Archive, HelpCircle } from 'lucide-react';
+import { Undo2, FileText, Image, Music, Video, Archive, HelpCircle, Mail } from 'lucide-react';
 import { useAppStore } from '../../store';
 import type { ActivityItem } from '../../store';
 
@@ -9,6 +9,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   music:    <Music   size={14} className="text-purple-400" />,
   video:    <Video   size={14} className="text-orange-400" />,
   archive:  <Archive size={14} className="text-yellow-400" />,
+  email:    <Mail    size={14} className="text-cyan-400" />,
 };
 
 function formatRelative(ts: number): string {

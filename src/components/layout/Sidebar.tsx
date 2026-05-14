@@ -1,4 +1,4 @@
-import { LayoutDashboard, FolderOpen, Folder, FolderClosed } from 'lucide-react';
+import { LayoutDashboard, FolderOpen, Folder, FolderClosed, Mail } from 'lucide-react';
 import { useAppStore } from '../../store';
 
 interface SidebarProps {
@@ -10,10 +10,11 @@ const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'explorer',  label: 'Explorer',  icon: Folder },
   { id: 'unsorted',  label: 'À valider', icon: FolderOpen },
+  { id: 'emails',    label: 'E-mails',   icon: Mail },
 ];
 
 export function Sidebar({ currentView, onNavigate }: SidebarProps) {
-  const { isWatching, watchedDirs, stats } = useAppStore();
+  const { isWatching, watchedDirs, stats, setSelectedCategory, selectedCategory } = useAppStore();
   const unsortedCount = Math.max(0, stats.total_files - stats.organized_files);
 
   return (
@@ -59,25 +60,43 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
 
       {/* ── Nav ────────────────────────────────────────────────── */}
       <nav className="flex-1 px-2 flex flex-col gap-0.5">
-        {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => onNavigate(id)}
-            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] transition-colors ${
-              currentView === id
-                ? 'bg-bx-600 text-zinc-100'
-                : 'text-zinc-500 hover:text-zinc-200 hover:bg-bx-800'
-            }`}
-          >
-            <Icon size={13} />
-            <span>{label}</span>
-            {id === 'unsorted' && unsortedCount > 0 && (
-              <span className="ml-auto text-[9px] font-semibold bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded-full">
-                {unsortedCount}
-              </span>
-            )}
-          </button>
-        ))}
+        {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+          const isActive = id === 'emails'
+            ? (currentView === 'explorer' && selectedCategory === 'email')
+            : currentView === id;
+
+          return (
+            <button
+              key={id}
+              onClick={() => {
+                if (id === 'emails') {
+                  setSelectedCategory('email');
+                  onNavigate('explorer');
+                } else {
+                  onNavigate(id);
+                }
+              }}
+              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] transition-colors ${
+                isActive
+                  ? 'bg-bx-600 text-zinc-100'
+                  : 'text-zinc-500 hover:text-zinc-200 hover:bg-bx-800'
+              }`}
+            >
+              <Icon size={13} />
+              <span>{label}</span>
+              {id === 'unsorted' && unsortedCount > 0 && (
+                <span className="ml-auto text-[9px] font-semibold bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded-full">
+                  {unsortedCount}
+                </span>
+              )}
+              {id === 'emails' && stats.email_files > 0 && (
+                <span className="ml-auto text-[9px] font-semibold bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded-full">
+                  {stats.email_files}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </nav>
 
       {/* ── Footer ─────────────────────────────────────────────── */}
