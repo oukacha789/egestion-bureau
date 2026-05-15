@@ -47,10 +47,6 @@ export function Dashboard() {
   const { stats, isWatching } = useAppStore();
   const [reportExporting, setReportExporting] = useState(false);
 
-  if (stats.total_files === 0) {
-    return <OnboardingScreen />;
-  }
-
   const orgRate =
     stats.total_files > 0
       ? Math.round((stats.organized_files / stats.total_files) * 100)
@@ -59,6 +55,10 @@ export function Dashboard() {
   const today = useMemo(() => new Date().toLocaleDateString('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   }), []);
+
+  if (stats.total_files === 0) {
+    return <OnboardingScreen />;
+  }
 
   async function handleExportReport() {
     setReportExporting(true);
