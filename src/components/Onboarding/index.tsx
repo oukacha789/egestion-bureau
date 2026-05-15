@@ -87,7 +87,7 @@ export function OnboardingScreen() {
         </div>
 
         {/* Séparateur */}
-        <div className="w-px bg-bx-800 self-stretch" />
+        <div className="w-px bg-zinc-800 self-stretch" />
 
         {/* Droite — valeur produit */}
         <div className="flex-1 flex flex-col justify-center gap-3">
