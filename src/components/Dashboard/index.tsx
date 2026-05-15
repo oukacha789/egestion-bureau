@@ -46,6 +46,7 @@ function StatCard({ label, value, sub, color, icon }: StatCardProps) {
 export function Dashboard() {
   const { stats, isWatching } = useAppStore();
   const [reportExporting, setReportExporting] = useState(false);
+  const [csvExporting, setCsvExporting] = useState(false);
 
   const orgRate =
     stats.total_files > 0
@@ -79,6 +80,7 @@ export function Dashboard() {
   }
 
   async function handleExportCsv() {
+    setCsvExporting(true);
     try {
       const csv = await invoke<string>('export_history_csv');
       const date = new Date().toISOString().slice(0, 10);
@@ -91,6 +93,8 @@ export function Dashboard() {
       setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (err) {
       console.error('export_history_csv error:', err);
+    } finally {
+      setCsvExporting(false);
     }
   }
 
@@ -111,7 +115,8 @@ export function Dashboard() {
           </button>
           <button
             onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-bx-800 transition-all"
+            disabled={csvExporting}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-bx-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Download size={11} />
             CSV
