@@ -2,6 +2,7 @@ pub mod commands;
 pub mod db;
 pub mod engine;
 pub mod events;
+pub mod notifications;
 
 use crate::engine::{
     classifier::classify_file,
