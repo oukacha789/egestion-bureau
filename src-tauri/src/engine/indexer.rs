@@ -88,6 +88,15 @@ pub async fn index_file(
     .execute(pool)
     .await?;
 
+    // ON CONFLICT keeps the original row's id — fetch the real id so downstream
+    // operations (tag inserts, classify updates) reference a valid foreign key.
+    let actual_id: String =
+        sqlx::query_scalar("SELECT id FROM files WHERE path = ?")
+            .bind(path)
+            .fetch_one(pool)
+            .await?;
+    let record = FileRecord { id: actual_id, ..record };
+
     let payload = FileIndexedPayload {
         file_id: record.id.clone(),
         path: record.path.clone(),
