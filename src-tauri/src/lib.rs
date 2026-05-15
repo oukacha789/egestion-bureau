@@ -14,6 +14,7 @@ use crate::engine::{
     watcher::FsWatcher,
 };
 use crate::events::AppEvent;
+use crate::notifications::{notify_duplicate, notify_organized, ThrottleState};
 use sqlx::SqlitePool;
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager};
@@ -32,6 +33,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![
             commands::get_recent_activity,
             commands::perform_undo,
@@ -105,7 +107,8 @@ pub fn run() {
             });
 
             let api_key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
-            tauri::async_runtime::spawn(start_pipeline(app_handle, pool, api_key, search_index, watcher, event_rx));
+            let throttle = Arc::new(Mutex::new(ThrottleState::new()));
+            tauri::async_runtime::spawn(start_pipeline(app_handle, pool, api_key, search_index, watcher, event_rx, throttle));
 
             Ok(())
         })
@@ -120,6 +123,7 @@ async fn start_pipeline(
     search_index: Arc<Mutex<SearchIndex>>,
     watcher: Arc<Mutex<FsWatcher>>,
     mut event_rx: tokio::sync::mpsc::Receiver<AppEvent>,
+    throttle: Arc<Mutex<ThrottleState>>,
 ) {
     let pool = Arc::new(pool);
     let api_key = Arc::new(api_key);
@@ -131,6 +135,7 @@ async fn start_pipeline(
     let (internal_tx, _) = tokio::sync::mpsc::channel::<AppEvent>(32);
     let event_tx_clone = internal_tx.clone();
     let app_handle_clone = app_handle.clone();
+    let throttle_clone = Arc::clone(&throttle);
 
     tokio::spawn(async move {
         let _fw = watcher;
@@ -206,6 +211,11 @@ async fn start_pipeline(
                                         "duplicate_of": record.duplicate_of,
                                     }),
                                 );
+                                notify_duplicate(
+                                    &app_handle_clone,
+                                    &record.name,
+                                    Arc::clone(&throttle_clone),
+                                );
                             }
                         }
                         Err(e) => tracing::error!("Index error: {}", e),
@@ -213,6 +223,12 @@ async fn start_pipeline(
                 }
                 AppEvent::FileOrganized(payload) => {
                     let _ = app_handle_clone.emit("file-organized", &payload);
+                    notify_organized(
+                        &app_handle_clone,
+                        &payload.name,
+                        &payload.category,
+                        Arc::clone(&throttle_clone),
+                    );
                 }
                 _ => {}
             }
