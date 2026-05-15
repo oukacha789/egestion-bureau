@@ -109,6 +109,37 @@ pub async fn build_csv(filters: &ExportFilters, pool: &SqlitePool) -> Result<Str
     Ok(csv)
 }
 
+pub async fn build_history_csv(pool: &SqlitePool) -> Result<String> {
+    let rows: Vec<(String, Option<String>, Option<String>, Option<String>, i64)> =
+        sqlx::query_as(
+            "SELECT f.name, a.path_before, a.path_after, f.category, a.executed_at \
+             FROM actions a \
+             JOIN files f ON a.file_id = f.id \
+             WHERE a.action_type = 'move' AND a.undone_at IS NULL \
+             ORDER BY a.executed_at DESC \
+             LIMIT 10000",
+        )
+        .fetch_all(pool)
+        .await?;
+
+    let mut csv = String::from("nom,chemin_source,destination,categorie,date\n");
+    for (name, path_before, path_after, category, executed_at) in &rows {
+        let date = DateTime::from_timestamp(*executed_at, 0)
+            .unwrap_or(DateTime::UNIX_EPOCH)
+            .format("%Y-%m-%d")
+            .to_string();
+        csv.push_str(&format!(
+            "{},{},{},{},{}\n",
+            csv_escape(name),
+            csv_escape(path_before.as_deref().unwrap_or("")),
+            csv_escape(path_after.as_deref().unwrap_or("")),
+            csv_escape(category.as_deref().unwrap_or("")),
+            date,
+        ));
+    }
+    Ok(csv)
+}
+
 fn csv_escape(s: &str) -> String {
     if s.contains(',') || s.contains('"') || s.contains('\n') {
         format!("\"{}\"", s.replace('"', "\"\""))
@@ -316,5 +347,67 @@ mod tests {
     #[test]
     fn test_csv_escape_plain_unchanged() {
         assert_eq!(csv_escape("hello"), "hello");
+    }
+
+    #[tokio::test]
+    async fn test_build_history_csv_has_header() {
+        let pool = make_db().await;
+        let csv = build_history_csv(&pool).await.unwrap();
+        assert!(csv.starts_with("nom,chemin_source,destination,categorie,date\n"));
+    }
+
+    #[tokio::test]
+    async fn test_build_history_csv_empty_db_only_header() {
+        let pool = make_db().await;
+        let csv = build_history_csv(&pool).await.unwrap();
+        assert_eq!(csv.lines().count(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_build_history_csv_with_data_returns_row() {
+        let pool = make_db().await;
+        sqlx::query(
+            "INSERT INTO files (id, path, name, size_bytes, hash_sha256, created_at, modified_at, indexed_at, category)
+             VALUES ('f1', '/dest/rapport.pdf', 'rapport.pdf', 100, 'hash1', 0, 0, 0, 'Finances')"
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO actions (id, file_id, action_type, path_before, path_after, executed_at)
+             VALUES ('a1', 'f1', 'move', '/downloads/rapport.pdf', '/dest/rapport.pdf', 1715000000)"
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let csv = build_history_csv(&pool).await.unwrap();
+        assert_eq!(csv.lines().count(), 2);
+        assert!(csv.contains("rapport.pdf"));
+        assert!(csv.contains("/downloads/rapport.pdf"));
+        assert!(csv.contains("/dest/rapport.pdf"));
+        assert!(csv.contains("Finances"));
+    }
+
+    #[tokio::test]
+    async fn test_build_history_csv_excludes_undone() {
+        let pool = make_db().await;
+        sqlx::query(
+            "INSERT INTO files (id, path, name, size_bytes, hash_sha256, created_at, modified_at, indexed_at)
+             VALUES ('f2', '/dest/note.txt', 'note.txt', 50, 'hash2', 0, 0, 0)"
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO actions (id, file_id, action_type, path_before, path_after, executed_at, undone_at)
+             VALUES ('a2', 'f2', 'move', '/src/note.txt', '/dest/note.txt', 1715000000, 1715001000)"
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let csv = build_history_csv(&pool).await.unwrap();
+        assert_eq!(csv.lines().count(), 1);
     }
 }
