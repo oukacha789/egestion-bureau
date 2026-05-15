@@ -70,7 +70,9 @@ export function Dashboard() {
       const a = document.createElement('a');
       a.href = url;
       a.download = `egestion-rapport-${Date.now()}.html`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (err) {
       console.error('export_report error:', err);
@@ -89,7 +91,9 @@ export function Dashboard() {
       const a = document.createElement('a');
       a.href = url;
       a.download = `egestion-historique-${date}.csv`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (err) {
       console.error('export_history_csv error:', err);
