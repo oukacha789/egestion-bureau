@@ -52,6 +52,7 @@ pub fn run() {
             commands::ask_assistant,
             commands::export_csv,
             commands::export_report,
+            commands::export_history_csv,
             commands::get_watch_dirs,
             commands::get_prefs,
             commands::set_watch_dirs,
