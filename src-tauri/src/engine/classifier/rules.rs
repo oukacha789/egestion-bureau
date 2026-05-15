@@ -59,6 +59,31 @@ pub fn classify_by_rules(path: &str, name: &str) -> Option<ClassificationResult>
         .and_then(|e| e.to_str())
         .map(|e| e.to_lowercase());
 
+    // Extension check first — higher confidence, more reliable than filename patterns.
+    if let Some(ref ext) = extension {
+        for (mapped_ext, category) in EXTENSION_MAP {
+            if ext == *mapped_ext {
+                // Enrich subcategory from a filename pattern when categories agree.
+                let subcategory = FILENAME_PATTERNS
+                    .iter()
+                    .find(|(pat, cat, sub)| {
+                        !sub.is_empty()
+                            && name_lower.starts_with(pat)
+                            && *cat == *category
+                    })
+                    .map(|(_, _, sub)| sub.to_string());
+
+                return Some(ClassificationResult {
+                    category: category.to_string(),
+                    subcategory,
+                    confidence: 0.95,
+                    tags: vec![category.to_string(), ext.clone()],
+                });
+            }
+        }
+    }
+
+    // Filename patterns as fallback for files with no recognized extension.
     for (pattern, category, subcategory) in FILENAME_PATTERNS {
         if name_lower.starts_with(pattern) {
             return Some(ClassificationResult {
@@ -67,19 +92,6 @@ pub fn classify_by_rules(path: &str, name: &str) -> Option<ClassificationResult>
                 confidence: 0.85,
                 tags: vec![category.to_string()],
             });
-        }
-    }
-
-    if let Some(ext) = extension {
-        for (mapped_ext, category) in EXTENSION_MAP {
-            if ext == *mapped_ext {
-                return Some(ClassificationResult {
-                    category: category.to_string(),
-                    subcategory: None,
-                    confidence: 0.95,
-                    tags: vec![category.to_string(), ext.clone()],
-                });
-            }
         }
     }
 
@@ -108,7 +120,8 @@ mod tests {
         let result = classify_by_rules("/path/facture_edf.pdf", "facture_edf.pdf").unwrap();
         assert_eq!(result.category, "document");
         assert_eq!(result.subcategory, Some("Factures".to_string()));
-        assert_eq!(result.confidence, 0.85);
+        // Extension (.pdf) wins at 0.95; subcategory enriched from "facture" pattern.
+        assert_eq!(result.confidence, 0.95);
     }
 
     #[test]
@@ -166,26 +179,29 @@ mod tests {
     }
 
     #[test]
-    fn test_classify_gmail_pattern_wins_over_extension() {
+    fn test_classify_gmail_extension_wins_subcategory_from_pattern() {
+        // Extension (.mbox) gives confidence 0.95; subcategory enriched from "gmail" pattern.
         let result = classify_by_rules("/path/gmail_export.mbox", "gmail_export.mbox").unwrap();
         assert_eq!(result.category, "email");
         assert_eq!(result.subcategory, Some("Gmail".to_string()));
-        assert_eq!(result.confidence, 0.85);
+        assert_eq!(result.confidence, 0.95);
     }
 
     #[test]
     fn test_classify_outlook_pattern() {
+        // Extension (.msg) wins at 0.95; subcategory enriched from "outlook" pattern.
         let result = classify_by_rules("/path/outlook_backup.msg", "outlook_backup.msg").unwrap();
         assert_eq!(result.category, "email");
         assert_eq!(result.subcategory, Some("Outlook".to_string()));
-        assert_eq!(result.confidence, 0.85);
+        assert_eq!(result.confidence, 0.95);
     }
 
     #[test]
     fn test_classify_thunderbird_pattern() {
+        // Extension (.mbox) wins at 0.95; subcategory enriched from "thunderbird" pattern.
         let result = classify_by_rules("/path/thunderbird_export.mbox", "thunderbird_export.mbox").unwrap();
         assert_eq!(result.category, "email");
         assert_eq!(result.subcategory, Some("Thunderbird".to_string()));
-        assert_eq!(result.confidence, 0.85);
+        assert_eq!(result.confidence, 0.95);
     }
 }

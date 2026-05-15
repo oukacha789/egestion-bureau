@@ -16,8 +16,19 @@ impl FsWatcher {
             move |result: notify::Result<notify::Event>| {
                 match result {
                     Ok(event) => {
-                        if matches!(event.kind, EventKind::Create(_) | EventKind::Modify(ModifyKind::Name(RenameMode::To))) {
+                        // On macOS/FSEvents, moves into a watched dir from an unwatched
+                        // location are reported as RenameMode::Any (not ::To). We also
+                        // keep ::To for paired renames and Create for direct writes.
+                        let relevant = matches!(
+                            event.kind,
+                            EventKind::Create(_)
+                                | EventKind::Modify(ModifyKind::Name(
+                                    RenameMode::To | RenameMode::Any
+                                ))
+                        );
+                        if relevant {
                             for path in event.paths {
+                                // path.is_file() skips rename-away events (file gone)
                                 if path.is_file() {
                                     let source = detect_source(&path);
                                     let payload = FileDetectedPayload {
@@ -71,7 +82,7 @@ impl FsWatcher {
     }
 }
 
-fn detect_source(path: &Path) -> String {
+pub fn detect_source(path: &Path) -> String {
     let path_str = path.to_string_lossy().to_lowercase();
     if path_str.contains("/downloads") {
         "downloads".to_string()

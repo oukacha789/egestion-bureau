@@ -64,16 +64,9 @@ export function Dashboard() {
   async function handleExportReport() {
     setReportExporting(true);
     try {
-      const html = await invoke<string>('export_report');
-      const uri = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
-      const a = document.createElement('a');
-      a.href = uri;
-      a.download = `egestion-rapport-${Date.now()}.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      await invoke('save_report');
     } catch (err) {
-      console.error('export_report error:', err);
+      console.error('save_report error:', err);
     } finally {
       setReportExporting(false);
     }
@@ -82,17 +75,9 @@ export function Dashboard() {
   async function handleExportCsv() {
     setCsvExporting(true);
     try {
-      const csv = await invoke<string>('export_history_csv');
-      const date = new Date().toISOString().slice(0, 10);
-      const uri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-      const a = document.createElement('a');
-      a.href = uri;
-      a.download = `egestion-historique-${date}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      await invoke('save_history_csv');
     } catch (err) {
-      console.error('export_history_csv error:', err);
+      console.error('save_history_csv error:', err);
     } finally {
       setCsvExporting(false);
     }

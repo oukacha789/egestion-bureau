@@ -53,6 +53,8 @@ pub fn run() {
             commands::export_csv,
             commands::export_report,
             commands::export_history_csv,
+            commands::save_history_csv,
+            commands::save_report,
             commands::get_watch_dirs,
             commands::get_prefs,
             commands::set_watch_dirs,
@@ -97,7 +99,7 @@ pub fn run() {
 
             let (event_tx, event_rx) = tokio::sync::mpsc::channel::<AppEvent>(256);
 
-            let watcher = FsWatcher::new(event_tx.clone(), config.watch_dirs)
+            let watcher = FsWatcher::new(event_tx.clone(), config.watch_dirs.clone())
                 .expect("Failed to start FSWatcher");
             let watcher = Arc::new(Mutex::new(watcher));
 
@@ -111,6 +113,30 @@ pub fn run() {
             let api_key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
             let throttle = Arc::new(Mutex::new(ThrottleState::new()));
             tauri::async_runtime::spawn(start_pipeline(app_handle, pool, api_key, search_index, watcher, event_rx, throttle));
+
+            // Scan files already present in watched dirs so rules apply to pre-existing files.
+            let scan_tx = event_tx.clone();
+            let scan_dirs = config.watch_dirs.clone();
+            tauri::async_runtime::spawn(async move {
+                for dir in scan_dirs {
+                    let entries = match std::fs::read_dir(&dir) {
+                        Ok(e) => e,
+                        Err(_) => continue,
+                    };
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        if path.is_file() {
+                            let source = crate::engine::watcher::detect_source(&path);
+                            let _ = scan_tx.send(AppEvent::FileDetected(
+                                crate::events::FileDetectedPayload {
+                                    path: path.to_string_lossy().into_owned(),
+                                    source_dir: source,
+                                },
+                            )).await;
+                        }
+                    }
+                }
+            });
 
             Ok(())
         })
