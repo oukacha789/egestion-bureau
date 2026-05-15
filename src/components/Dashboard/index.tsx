@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useAppStore } from '../../store';
 import { ActivityFeed } from './ActivityFeed';
+import { OnboardingScreen } from '../Onboarding';
 import {
   Files, CheckSquare, Copy, TrendingUp,
   BarChart2, Download, Circle,
@@ -45,6 +46,10 @@ function StatCard({ label, value, sub, color, icon }: StatCardProps) {
 export function Dashboard() {
   const { stats, isWatching } = useAppStore();
   const [reportExporting, setReportExporting] = useState(false);
+
+  if (stats.total_files === 0) {
+    return <OnboardingScreen />;
+  }
 
   const orgRate =
     stats.total_files > 0
