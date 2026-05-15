@@ -7,3 +7,8 @@
   --color-bx-700: #4A1525;
   --color-bx-600: #5C1A2A;
 }
+
+@keyframes shrink {
+  from { width: 100%; }
+  to   { width: 0%;   }
+}
