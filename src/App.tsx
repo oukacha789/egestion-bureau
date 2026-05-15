@@ -9,6 +9,7 @@ import { useFileEvents } from './hooks/useFileEvents';
 import { useKeyboard } from './hooks/useKeyboard';
 import { PreferencesView } from './components/Preferences/PreferencesView';
 import { RulesView } from './components/Rules';
+import { UndoToast } from './components/UndoToast';
 
 function App() {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -27,6 +28,7 @@ function App() {
       </main>
       <CommandPalette />
       <AssistantOverlay />
+      <UndoToast />
     </div>
   );
 }
