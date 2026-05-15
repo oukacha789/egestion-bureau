@@ -65,15 +65,13 @@ export function Dashboard() {
     setReportExporting(true);
     try {
       const html = await invoke<string>('export_report');
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
+      const uri = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = uri;
       a.download = `egestion-rapport-${Date.now()}.html`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (err) {
       console.error('export_report error:', err);
     } finally {
@@ -86,15 +84,13 @@ export function Dashboard() {
     try {
       const csv = await invoke<string>('export_history_csv');
       const date = new Date().toISOString().slice(0, 10);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
+      const uri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = uri;
       a.download = `egestion-historique-${date}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (err) {
       console.error('export_history_csv error:', err);
     } finally {
