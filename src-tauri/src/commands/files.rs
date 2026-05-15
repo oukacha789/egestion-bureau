@@ -275,6 +275,16 @@ pub fn get_watch_dirs() -> Vec<String> {
         .collect()
 }
 
+#[tauri::command]
+pub fn open_quick_look(path: String) -> Result<(), String> {
+    std::process::Command::new("qlmanage")
+        .arg("-p")
+        .arg(&path)
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -302,5 +312,21 @@ mod tests {
     async fn test_read_text_preview_missing_file_returns_err() {
         let result = read_text_preview("/tmp/does_not_exist_xyz.txt".to_string()).await;
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_open_quick_look_valid_path_returns_ok() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("test.txt");
+        std::fs::write(&path, "hello").unwrap();
+        let result = open_quick_look(path.to_str().unwrap().to_string());
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_open_quick_look_nonexistent_path_returns_ok() {
+        // qlmanage spawns even for missing files — spawn() itself succeeds
+        let result = open_quick_look("/tmp/this_file_does_not_exist_xyz.txt".to_string());
+        assert!(result.is_ok());
     }
 }
