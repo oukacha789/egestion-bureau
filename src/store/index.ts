@@ -81,6 +81,7 @@ interface AppStore {
   stats: StatsData;
   isWatching: boolean;
   addActivity: (item: ActivityItem) => void;
+  removeActivities: (ids: string[]) => void;
   setStats: (stats: StatsData) => void;
   setIsWatching: (v: boolean) => void;
 
@@ -127,6 +128,10 @@ export const useAppStore = create<AppStore>((set) => ({
   isWatching: false,
   addActivity: (item) =>
     set((state) => ({ activity: [item, ...state.activity].slice(0, 50) })),
+  removeActivities: (ids) =>
+    set((state) => ({
+      activity: state.activity.filter((a) => !ids.includes(a.action_id)),
+    })),
   setStats: (stats) => set({ stats }),
   setIsWatching: (v) => set({ isWatching: v }),
 
