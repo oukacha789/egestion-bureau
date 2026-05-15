@@ -63,6 +63,19 @@ export function Explorer() {
     loadMeta();
   }, [selectedFileId]);
 
+  // Raccourci Space → Quick Look
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== ' ') return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (!fileMetadata) return;
+      e.preventDefault();
+      invoke('open_quick_look', { path: fileMetadata.path });
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [fileMetadata]);
+
   return (
     <div className="flex h-full">
       {/* Category sidebar */}
