@@ -29,7 +29,7 @@ export function UndoToast() {
     const ids = batch.map((b) => b.actionId);
     for (const actionId of ids) {
       try {
-        await invoke('perform_undo', { actionId });
+        await invoke<void>('perform_undo', { actionId });
       } catch (e) {
         console.error('Undo failed:', e);
       }
