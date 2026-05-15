@@ -277,9 +277,14 @@ pub fn get_watch_dirs() -> Vec<String> {
 
 #[tauri::command]
 pub fn open_quick_look(path: String) -> Result<(), String> {
-    std::process::Command::new("qlmanage")
+    use std::os::unix::process::CommandExt;
+    std::process::Command::new("/usr/bin/qlmanage")
         .arg("-p")
         .arg(&path)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .process_group(0)
         .spawn()
         .map(|_| ())
         .map_err(|e| e.to_string())
