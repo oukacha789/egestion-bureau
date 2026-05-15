@@ -45,10 +45,10 @@ export function RulesView() {
     try {
       const rule = await invoke<RuleRecord>('create_rule', {
         name: form.name.trim(),
-        condition_type: form.condition_type,
-        condition_value: form.condition_value.trim(),
-        target_dir: form.target_dir.trim(),
-        auto_tag: form.auto_tag.trim() || null,
+        conditionType: form.condition_type,
+        conditionValue: form.condition_value.trim(),
+        targetDir: form.target_dir.trim(),
+        autoTag: form.auto_tag.trim() || null,
       });
       addRule(rule);
       setForm({ name: '', condition_type: 'extension', condition_value: '', target_dir: '', auto_tag: '' });
@@ -94,10 +94,10 @@ export function RulesView() {
       const updated = await invoke<RuleRecord>('update_rule', {
         id: editingId,
         name: editForm.name.trim(),
-        condition_type: editForm.condition_type,
-        condition_value: editForm.condition_value.trim(),
-        target_dir: editForm.target_dir.trim(),
-        auto_tag: editForm.auto_tag.trim() || null,
+        conditionType: editForm.condition_type,
+        conditionValue: editForm.condition_value.trim(),
+        targetDir: editForm.target_dir.trim(),
+        autoTag: editForm.auto_tag.trim() || null,
       });
       updateRule(updated);
       setEditingId(null);
