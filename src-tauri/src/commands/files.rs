@@ -278,9 +278,22 @@ pub fn get_watch_dirs() -> Vec<String> {
 #[tauri::command]
 pub fn open_quick_look(path: String) -> Result<(), String> {
     use std::os::unix::process::CommandExt;
-    std::process::Command::new("/usr/bin/qlmanage")
-        .arg("-p")
-        .arg(&path)
+
+    let ext = std::path::Path::new(&path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_lowercase())
+        .unwrap_or_default();
+
+    // Mail QL extension cannot render via qlmanage — open in Mail.app directly
+    let (bin, args): (&str, Vec<&str>) = if ext == "eml" || ext == "emlx" {
+        ("/usr/bin/open", vec![&path])
+    } else {
+        ("/usr/bin/qlmanage", vec!["-p", &path])
+    };
+
+    std::process::Command::new(bin)
+        .args(&args)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
