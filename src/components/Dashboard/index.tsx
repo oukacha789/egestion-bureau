@@ -78,6 +78,22 @@ export function Dashboard() {
     }
   }
 
+  async function handleExportCsv() {
+    try {
+      const csv = await invoke<string>('export_history_csv');
+      const date = new Date().toISOString().slice(0, 10);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `egestion-historique-${date}.csv`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+    } catch (err) {
+      console.error('export_history_csv error:', err);
+    }
+  }
+
   return (
     <div className="flex flex-col h-full bg-bx-950">
 
@@ -94,9 +110,8 @@ export function Dashboard() {
             Rapport
           </button>
           <button
-            disabled
-            title="À venir"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-bx-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            onClick={handleExportCsv}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-zinc-400 hover:text-zinc-100 hover:bg-bx-800 transition-all"
           >
             <Download size={11} />
             CSV
