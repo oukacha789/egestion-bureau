@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { Check, X } from 'lucide-react';
 
 interface FileRecord {
@@ -9,6 +10,7 @@ interface FileRecord {
   extension: string | null;
   size_bytes: number;
   category: string | null;
+  subcategory: string | null;
   confidence: number | null;
 }
 
@@ -38,9 +40,16 @@ export function Unsorted() {
 
   useEffect(() => { load(); }, []);
 
-  const validate = async (fileId: string, category: string) => {
+  useEffect(() => {
+    const unlistenPromise = listen<{ file_id: string }>('file-organized', (event) => {
+      setFiles((prev) => prev.filter((f) => f.id !== event.payload.file_id));
+    });
+    return () => { unlistenPromise.then((fn) => fn()); };
+  }, []);
+
+  const validate = async (fileId: string, category: string, subcategory: string | null = null) => {
     try {
-      await invoke('validate_unsorted_file', { fileId, category, subcategory: null });
+      await invoke('validate_unsorted_file', { fileId, category, subcategory });
       setFiles((prev) => prev.filter((f) => f.id !== fileId));
     } catch (e) {
       console.error('Validation failed:', e);
@@ -93,7 +102,22 @@ export function Unsorted() {
                 <X size={14} />
               </button>
             </div>
+            {file.category && (
+              <div className="mb-2 flex items-center gap-2">
+                <span className="text-[10px] text-zinc-500">✦ IA suggère :</span>
+                <button
+                  onClick={() => validate(file.id, file.category!, file.subcategory)}
+                  className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition-colors font-medium"
+                >
+                  {file.category}
+                  {file.subcategory ? ` / ${file.subcategory}` : ''}
+                </button>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
+              {file.category && (
+                <span className="text-[10px] text-zinc-600 mr-1 self-center">ou :</span>
+              )}
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
