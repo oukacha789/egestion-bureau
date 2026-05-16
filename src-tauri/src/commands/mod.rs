@@ -31,13 +31,15 @@ mod tests {
 
     #[test]
     fn test_resolve_api_key_ignores_empty_string() {
-        let _key = resolve_api_key(Some(""));
-        // no panic — correct behavior
+        let expected = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
+        let key = resolve_api_key(Some(""));
+        assert_eq!(key, expected, "empty string should fall through to env var");
     }
 
     #[test]
     fn test_resolve_api_key_none_returns_env_or_empty() {
-        let _key = resolve_api_key(None);
-        // no panic — correct behavior
+        let expected = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
+        let key = resolve_api_key(None);
+        assert_eq!(key, expected, "None should fall through to env var");
     }
 }
