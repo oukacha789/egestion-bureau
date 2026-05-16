@@ -33,7 +33,12 @@ export function HelpView() {
       });
       setAnswer(resp.text);
     } catch (err) {
-      setError(typeof err === 'string' ? err : 'Erreur lors de la requête.');
+      const msg = typeof err === 'string' ? err : (err as Error)?.message ?? String(err);
+      if (msg.includes('not set') || msg.includes('api_key') || msg.includes('ANTHROPIC')) {
+        setError('Clé API non configurée — allez dans Préférences → Intelligence Artificielle.');
+      } else {
+        setError(msg || 'Erreur lors de la requête.');
+      }
     } finally {
       setLoading(false);
     }

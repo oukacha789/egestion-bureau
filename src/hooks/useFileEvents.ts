@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
-import { useAppStore } from '../store';
+import { useAppStore, FileRecord } from '../store';
 
 interface FileOrganizedPayload {
   action_id: string;
@@ -32,6 +32,18 @@ export function useFileEvents() {
       invoke<{ total_files: number; organized_files: number; duplicate_files: number; email_files: number }>('get_stats')
         .then(setStats)
         .catch(console.error);
+
+      // Refresh Explorer if the current category matches the organized file's category
+      const { selectedCategory, explorerSort, setExplorerFiles } = useAppStore.getState();
+      if (event.payload.category === selectedCategory) {
+        invoke<FileRecord[]>('get_files_by_category', {
+          category: selectedCategory,
+          sortBy: explorerSort,
+          page: 0,
+        })
+          .then(setExplorerFiles)
+          .catch(console.error);
+      }
     });
 
     invoke<{ total_files: number; organized_files: number; duplicate_files: number; email_files: number }>('get_stats')
