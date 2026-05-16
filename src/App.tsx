@@ -10,6 +10,7 @@ import { useFileEvents } from './hooks/useFileEvents';
 import { useKeyboard } from './hooks/useKeyboard';
 import { PreferencesView } from './components/Preferences/PreferencesView';
 import { RulesView } from './components/Rules';
+import { HelpView } from './components/Help';
 import { UndoToast } from './components/UndoToast';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
           {currentView === 'unsorted'  && <Unsorted />}
           {currentView === 'preferences' && <PreferencesView />}
           {currentView === 'rules' && <RulesView />}
+          {currentView === 'help'  && <HelpView />}
         </main>
       </div>
       <CommandPalette />
