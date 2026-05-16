@@ -128,19 +128,21 @@ pub fn mask_api_key(key: &str) -> String {
     if key.len() <= 20 {
         return "***".to_string();
     }
-    format!("{}***", &key[..20])
+    let prefix: String = key.chars().take(20).collect();
+    format!("{prefix}***")
 }
 
 #[tauri::command]
-pub fn get_api_key_masked(state: State<'_, AppState>) -> String {
-    let config = state.config.lock().unwrap();
-    let key = crate::commands::resolve_api_key(config.api_key.as_deref());
-    mask_api_key(&key)
+pub fn get_api_key_masked(state: State<'_, AppState>) -> Result<String, String> {
+    let stored = state.config.lock().map_err(|e| e.to_string())?.api_key.clone();
+    let key = crate::commands::resolve_api_key(stored.as_deref());
+    Ok(mask_api_key(&key))
 }
 
 #[tauri::command]
 pub fn set_api_key(key: String, state: State<'_, AppState>) -> Result<(), String> {
     let mut config = state.config.lock().map_err(|e| e.to_string())?;
+    let key = key.trim().to_string();
     config.api_key = if key.is_empty() { None } else { Some(key) };
     config.save(&state.app_data_dir).map_err(|e| e.to_string())
 }
@@ -153,7 +155,7 @@ mod tests {
     fn test_mask_key_shows_prefix() {
         let masked = mask_api_key("sk-ant-api03-VERY-LONG-KEY-HERE");
         assert!(masked.ends_with("***"));
-        assert_eq!(&masked[..20], "sk-ant-api03-VERY-LO");
+        assert!(masked.starts_with("sk-ant-api03-VERY-LO"));
     }
 
     #[test]
@@ -169,5 +171,17 @@ mod tests {
     #[test]
     fn test_mask_key_exactly_20_returns_stars() {
         assert_eq!(mask_api_key("12345678901234567890"), "***");
+    }
+
+    #[test]
+    fn test_mask_key_21_chars_shows_prefix() {
+        let key = "a".repeat(21);
+        assert_eq!(mask_api_key(&key), format!("{}***", "a".repeat(20)));
+    }
+
+    #[test]
+    fn test_mask_key_multibyte_does_not_panic() {
+        // 15 chars = 30 bytes — must not panic
+        let _ = mask_api_key(&"é".repeat(15));
     }
 }
