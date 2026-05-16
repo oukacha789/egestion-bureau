@@ -25,6 +25,7 @@ pub struct AppState {
     pub search_index: Arc<Mutex<SearchIndex>>,
     pub watcher: Arc<Mutex<crate::engine::watcher::FsWatcher>>,
     pub app_data_dir: std::path::PathBuf,
+    pub config: Arc<Mutex<AppConfig>>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -96,10 +97,11 @@ pub fn run() {
             let search_index = Arc::new(Mutex::new(search_index));
 
             let config = AppConfig::load(&data_dir).unwrap_or_else(|_| AppConfig::default_config());
+            let config = Arc::new(Mutex::new(config));
 
             let (event_tx, event_rx) = tokio::sync::mpsc::channel::<AppEvent>(256);
 
-            let watcher = FsWatcher::new(event_tx.clone(), config.watch_dirs.clone())
+            let watcher = FsWatcher::new(event_tx.clone(), config.lock().expect("config lock").watch_dirs.clone())
                 .expect("Failed to start FSWatcher");
             let watcher = Arc::new(Mutex::new(watcher));
 
@@ -108,15 +110,19 @@ pub fn run() {
                 search_index: Arc::clone(&search_index),
                 watcher: Arc::clone(&watcher),
                 app_data_dir: data_dir.clone(),
+                config: Arc::clone(&config),
             });
 
-            let api_key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
+            let api_key = {
+                let cfg = config.lock().expect("config lock");
+                crate::commands::resolve_api_key(cfg.api_key.as_deref())
+            };
             let throttle = Arc::new(Mutex::new(ThrottleState::new()));
-            tauri::async_runtime::spawn(start_pipeline(app_handle, pool, api_key, search_index, watcher, event_rx, throttle));
+            tauri::async_runtime::spawn(start_pipeline(app_handle, pool, api_key, search_index, watcher, event_tx.clone(), event_rx, throttle));
 
             // Scan files already present in watched dirs so rules apply to pre-existing files.
             let scan_tx = event_tx.clone();
-            let scan_dirs = config.watch_dirs.clone();
+            let scan_dirs = config.lock().expect("config lock").watch_dirs.clone();
             tauri::async_runtime::spawn(async move {
                 for dir in scan_dirs {
                     let entries = match std::fs::read_dir(&dir) {
@@ -150,6 +156,7 @@ async fn start_pipeline(
     api_key: String,
     search_index: Arc<Mutex<SearchIndex>>,
     watcher: Arc<Mutex<FsWatcher>>,
+    event_tx: tokio::sync::mpsc::Sender<AppEvent>,
     mut event_rx: tokio::sync::mpsc::Receiver<AppEvent>,
     throttle: Arc<Mutex<ThrottleState>>,
 ) {
@@ -160,8 +167,7 @@ async fn start_pipeline(
 
     let pool_clone = Arc::clone(&pool);
     let api_key_clone = Arc::clone(&api_key);
-    let (internal_tx, _) = tokio::sync::mpsc::channel::<AppEvent>(32);
-    let event_tx_clone = internal_tx.clone();
+    let event_tx_clone = event_tx;
     let app_handle_clone = app_handle.clone();
     let throttle_clone = Arc::clone(&throttle);
 
