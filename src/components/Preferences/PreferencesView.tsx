@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
-import { FolderOpen, Plus, Trash2, Eye } from 'lucide-react';
+import { FolderOpen, Plus, Trash2, Eye, Cpu, KeyRound } from 'lucide-react';
 
 export function PreferencesView() {
   const [dirs, setDirs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [maskedKey, setMaskedKey] = useState('');
+  const [editingKey, setEditingKey] = useState(false);
+  const [newKey, setNewKey] = useState('');
+  const [savingKey, setSavingKey] = useState(false);
 
   useEffect(() => {
     invoke<string[]>('get_prefs').then(setDirs).catch(console.error);
+    invoke<string>('get_api_key_masked').then(setMaskedKey).catch(console.error);
   }, []);
 
   function showFeedback(msg: string) {
@@ -48,6 +53,22 @@ export function PreferencesView() {
       console.error('remove_watch_dir error:', err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleSaveKey() {
+    setSavingKey(true);
+    try {
+      await invoke('set_api_key', { key: newKey });
+      const masked = await invoke<string>('get_api_key_masked');
+      setMaskedKey(masked);
+      setEditingKey(false);
+      setNewKey('');
+      showFeedback('Clé API sauvegardée');
+    } catch (err) {
+      console.error('set_api_key error:', err);
+    } finally {
+      setSavingKey(false);
     }
   }
 
@@ -120,6 +141,74 @@ export function PreferencesView() {
                 </div>
               );
             })}
+          </div>
+        </section>
+
+        {/* Intelligence Artificielle */}
+        <section className="mt-8">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="text-sm font-medium text-zinc-300 flex items-center gap-2">
+                <Cpu size={14} className="text-zinc-500" />
+                Intelligence Artificielle
+              </h2>
+              <p className="text-xs text-zinc-600 mt-0.5">
+                Clé API Anthropic pour la classification IA et l'assistant.
+                Fallback :{' '}
+                <code className="text-zinc-500 bg-zinc-900 px-1 py-0.5 rounded text-[10px]">
+                  ANTHROPIC_API_KEY
+                </code>
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
+            {editingKey ? (
+              <div className="flex items-center gap-2">
+                <KeyRound size={13} className="text-zinc-500 shrink-0" />
+                <input
+                  type="password"
+                  value={newKey}
+                  onChange={(e) => setNewKey(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSaveKey()}
+                  placeholder="sk-ant-api03-..."
+                  className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-indigo-500"
+                  autoFocus
+                />
+                <button
+                  onClick={handleSaveKey}
+                  disabled={savingKey || !newKey.trim()}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 rounded-lg text-xs text-white transition-colors"
+                >
+                  {savingKey ? '…' : 'Sauvegarder'}
+                </button>
+                <button
+                  onClick={() => { setEditingKey(false); setNewKey(''); }}
+                  className="text-xs text-zinc-500 hover:text-zinc-300"
+                >
+                  Annuler
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <KeyRound size={13} className="text-zinc-500 shrink-0" />
+                <span className="flex-1 text-xs font-mono text-zinc-400">
+                  {maskedKey || 'Non configurée'}
+                </span>
+                <div
+                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${maskedKey ? 'bg-emerald-400' : 'bg-zinc-600'}`}
+                />
+                <span className={`text-xs ${maskedKey ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                  {maskedKey ? 'Connectée' : 'Non configurée'}
+                </span>
+                <button
+                  onClick={() => setEditingKey(true)}
+                  className="text-xs text-zinc-500 hover:text-zinc-300 underline"
+                >
+                  {maskedKey ? 'Modifier' : 'Configurer'}
+                </button>
+              </div>
+            )}
           </div>
         </section>
 
