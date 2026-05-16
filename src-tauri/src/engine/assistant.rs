@@ -170,6 +170,105 @@ pub async fn ask(
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SuggestedRule {
+    pub condition_type: String,
+    pub condition_value: String,
+    pub target_dir: String,
+    pub label: String,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct OnboardingAnalysis {
+    pub file_summary: String,
+    pub suggested_rules: Vec<SuggestedRule>,
+}
+
+pub async fn analyze_for_onboarding(
+    api_key: &str,
+    watch_dirs: &[String],
+) -> Result<OnboardingAnalysis> {
+    use std::collections::HashMap;
+
+    let mut ext_counts: HashMap<String, i64> = HashMap::new();
+    for dir in watch_dirs {
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                if entry.path().is_file() {
+                    let ext = entry
+                        .path()
+                        .extension()
+                        .and_then(|e| e.to_str())
+                        .unwrap_or("inconnu")
+                        .to_lowercase();
+                    *ext_counts.entry(ext).or_insert(0) += 1;
+                }
+            }
+        }
+    }
+
+    let mut sorted: Vec<(String, i64)> = ext_counts.into_iter().collect();
+    sorted.sort_by(|a, b| b.1.cmp(&a.1));
+    sorted.truncate(10);
+
+    let total: i64 = sorted.iter().map(|(_, c)| c).sum();
+
+    let file_summary = if total == 0 {
+        "Aucun fichier détecté".to_string()
+    } else {
+        let parts: Vec<String> = sorted
+            .iter()
+            .take(5)
+            .map(|(ext, cnt)| format!("{} .{}", cnt, ext))
+            .collect();
+        format!("{} fichiers : {}", total, parts.join(", "))
+    };
+
+    if api_key.is_empty() || total == 0 {
+        return Ok(OnboardingAnalysis {
+            file_summary,
+            suggested_rules: vec![],
+        });
+    }
+
+    let client = Client::new();
+    let prompt = format!(
+        "Analysez ces types de fichiers détectés et proposez 2-4 règles de classification simples. \
+         Répondez UNIQUEMENT avec un tableau JSON valide, sans markdown ni explication.\n\n\
+         Format exact : [{{\"condition_type\":\"extension\",\"condition_value\":\"pdf\",\
+         \"target_dir\":\"Documents/Factures\",\"label\":\"PDF → Documents/Factures\"}}]\n\n\
+         Fichiers détectés : {}",
+        file_summary
+    );
+
+    let body = serde_json::json!({
+        "model": SONNET_MODEL,
+        "max_tokens": 512,
+        "system": "Tu es un assistant de configuration pour l'app Egestion. Propose des règles de classification adaptées aux fichiers. Réponds UNIQUEMENT avec du JSON valide.",
+        "messages": [{"role": "user", "content": prompt}]
+    });
+
+    let response = client
+        .post("https://api.anthropic.com/v1/messages")
+        .header("x-api-key", api_key)
+        .header("anthropic-version", "2023-06-01")
+        .header("content-type", "application/json")
+        .json(&body)
+        .send()
+        .await;
+
+    let suggested_rules = match response {
+        Ok(resp) if resp.status().is_success() => {
+            let json: serde_json::Value = resp.json().await.unwrap_or_default();
+            let raw = json["content"][0]["text"].as_str().unwrap_or("[]").trim();
+            serde_json::from_str::<Vec<SuggestedRule>>(raw).unwrap_or_default()
+        }
+        _ => vec![],
+    };
+
+    Ok(OnboardingAnalysis { file_summary, suggested_rules })
+}
+
 async fn execute_safe_query(sql: &str, pool: &SqlitePool) -> Result<Vec<FileRecord>> {
     let trimmed = sql.trim();
     if !trimmed.to_uppercase().starts_with("SELECT") {
@@ -275,5 +374,32 @@ mod tests {
             &pool,
         ).await;
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_parse_suggested_rules_valid() {
+        let json = r#"[{"condition_type":"extension","condition_value":"pdf","target_dir":"Documents/Factures","label":"PDF → Documents/Factures"}]"#;
+        let rules: Vec<SuggestedRule> = serde_json::from_str(json).unwrap();
+        assert_eq!(rules.len(), 1);
+        assert_eq!(rules[0].condition_type, "extension");
+        assert_eq!(rules[0].condition_value, "pdf");
+        assert_eq!(rules[0].target_dir, "Documents/Factures");
+    }
+
+    #[test]
+    fn test_parse_suggested_rules_invalid_returns_empty() {
+        let rules: Vec<SuggestedRule> = serde_json::from_str("not json").unwrap_or_default();
+        assert!(rules.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_analyze_for_onboarding_no_api_key_returns_summary() {
+        let analysis = analyze_for_onboarding("", &[]).await.unwrap();
+        assert_eq!(analysis.suggested_rules.len(), 0);
+        assert!(
+            analysis.file_summary.contains("0") || analysis.file_summary.contains("Aucun"),
+            "got: {}",
+            analysis.file_summary
+        );
     }
 }

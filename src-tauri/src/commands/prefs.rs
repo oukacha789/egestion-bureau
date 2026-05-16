@@ -1,3 +1,4 @@
+use crate::engine::assistant::OnboardingAnalysis;
 use crate::engine::config::AppConfig;
 use crate::AppState;
 use std::path::PathBuf;
@@ -145,6 +146,26 @@ pub fn set_api_key(key: String, state: State<'_, AppState>) -> Result<(), String
     let key = key.trim().to_string();
     config.api_key = if key.is_empty() { None } else { Some(key) };
     config.save(&state.app_data_dir).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn analyze_for_onboarding(state: State<'_, AppState>) -> Result<OnboardingAnalysis, String> {
+    let api_key = {
+        let config = state.config.lock().map_err(|e| e.to_string())?;
+        crate::commands::resolve_api_key(config.api_key.as_deref())
+    };
+    let watch_dirs: Vec<String> = state
+        .watcher
+        .lock()
+        .map_err(|e| e.to_string())?
+        .current_dirs()
+        .iter()
+        .map(|p| p.to_string_lossy().into_owned())
+        .collect();
+    // Use full path to avoid name conflict with this command
+    crate::engine::assistant::analyze_for_onboarding(&api_key, &watch_dirs)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[cfg(test)]

@@ -60,6 +60,7 @@ pub fn run() {
             commands::get_prefs,
             commands::get_api_key_masked,
             commands::set_api_key,
+            commands::analyze_for_onboarding,
             commands::set_watch_dirs,
             commands::add_watch_dir,
             commands::remove_watch_dir,
