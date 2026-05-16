@@ -24,7 +24,7 @@ pub fn set_watch_dirs(
 ) -> Result<(), String> {
     let paths: Vec<PathBuf> = dirs.iter().map(PathBuf::from).collect();
 
-    let config = AppConfig { watch_dirs: paths.clone() };
+    let config = AppConfig { watch_dirs: paths.clone(), api_key: None };
     config
         .save(&state.app_data_dir)
         .map_err(|e| e.to_string())?;
@@ -62,7 +62,7 @@ pub fn add_watch_dir(
 
     current.push(new_path);
 
-    let config = AppConfig { watch_dirs: current.clone() };
+    let config = AppConfig { watch_dirs: current.clone(), api_key: None };
     config
         .save(&state.app_data_dir)
         .map_err(|e| e.to_string())?;
@@ -97,7 +97,7 @@ pub fn remove_watch_dir(
         .cloned()
         .collect();
 
-    let config = AppConfig { watch_dirs: current.clone() };
+    let config = AppConfig { watch_dirs: current.clone(), api_key: None };
     config
         .save(&state.app_data_dir)
         .map_err(|e| e.to_string())?;

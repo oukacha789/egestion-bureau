@@ -7,12 +7,15 @@ use crate::engine::watcher::default_watch_dirs;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
     pub watch_dirs: Vec<PathBuf>,
+    #[serde(default)]
+    pub api_key: Option<String>,
 }
 
 impl AppConfig {
     pub fn default_config() -> Self {
         Self {
             watch_dirs: default_watch_dirs(),
+            api_key: None,
         }
     }
 
@@ -54,6 +57,7 @@ mod tests {
                 PathBuf::from("/tmp/a"),
                 PathBuf::from("/tmp/b"),
             ],
+            api_key: None,
         };
         original.save(dir.path()).unwrap();
 
@@ -69,6 +73,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let config = AppConfig {
             watch_dirs: vec![PathBuf::from("/tmp/test")],
+            api_key: None,
         };
         config.save(dir.path()).unwrap();
 
@@ -84,5 +89,33 @@ mod tests {
         std::fs::write(dir.path().join("config.json"), "not json").unwrap();
         let result = AppConfig::load(dir.path());
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_api_key_serde_default_none() {
+        let json = r#"{"watch_dirs":[]}"#;
+        let config: AppConfig = serde_json::from_str(json).unwrap();
+        assert!(config.api_key.is_none());
+    }
+
+    #[test]
+    fn test_api_key_round_trip() {
+        let dir = tempdir().unwrap();
+        let config = AppConfig {
+            watch_dirs: vec![],
+            api_key: Some("sk-ant-test-key".to_string()),
+        };
+        config.save(dir.path()).unwrap();
+        let loaded = AppConfig::load(dir.path()).unwrap();
+        assert_eq!(loaded.api_key, Some("sk-ant-test-key".to_string()));
+    }
+
+    #[test]
+    fn test_api_key_none_round_trip() {
+        let dir = tempdir().unwrap();
+        let config = AppConfig { watch_dirs: vec![], api_key: None };
+        config.save(dir.path()).unwrap();
+        let loaded = AppConfig::load(dir.path()).unwrap();
+        assert!(loaded.api_key.is_none());
     }
 }
