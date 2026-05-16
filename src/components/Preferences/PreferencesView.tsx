@@ -66,7 +66,9 @@ export function PreferencesView() {
       setNewKey('');
       showFeedback('Clé API sauvegardée');
     } catch (err) {
+      const msg = typeof err === 'string' ? err : (err as Error)?.message ?? String(err);
       console.error('set_api_key error:', err);
+      showFeedback('Erreur : ' + (msg || 'impossible de sauvegarder la clé'));
     } finally {
       setSavingKey(false);
     }

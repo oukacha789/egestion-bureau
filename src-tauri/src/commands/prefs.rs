@@ -5,6 +5,11 @@ use std::path::PathBuf;
 use tauri::State;
 
 #[tauri::command]
+pub fn get_data_dir(state: State<'_, AppState>) -> String {
+    state.app_data_dir.to_string_lossy().into_owned()
+}
+
+#[tauri::command]
 pub fn get_prefs(state: State<'_, AppState>) -> Vec<String> {
     state
         .watcher
@@ -143,7 +148,13 @@ pub fn get_api_key_masked(state: State<'_, AppState>) -> Result<String, String> 
 #[tauri::command]
 pub fn set_api_key(key: String, state: State<'_, AppState>) -> Result<(), String> {
     let mut config = state.config.lock().map_err(|e| e.to_string())?;
-    let key = key.trim().to_string();
+    // Strip any leading garbage before the real key (e.g. "• \t" from copy-paste)
+    let raw = key.trim().to_string();
+    let key = if let Some(idx) = raw.find("sk-") {
+        raw[idx..].to_string()
+    } else {
+        raw
+    };
     config.api_key = if key.is_empty() { None } else { Some(key) };
     config.save(&state.app_data_dir).map_err(|e| e.to_string())
 }

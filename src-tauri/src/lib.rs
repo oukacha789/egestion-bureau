@@ -57,6 +57,7 @@ pub fn run() {
             commands::save_history_csv,
             commands::save_report,
             commands::get_watch_dirs,
+            commands::get_data_dir,
             commands::get_prefs,
             commands::get_api_key_masked,
             commands::set_api_key,
