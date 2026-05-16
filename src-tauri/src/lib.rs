@@ -58,6 +58,8 @@ pub fn run() {
             commands::save_report,
             commands::get_watch_dirs,
             commands::get_prefs,
+            commands::get_api_key_masked,
+            commands::set_api_key,
             commands::set_watch_dirs,
             commands::add_watch_dir,
             commands::remove_watch_dir,
