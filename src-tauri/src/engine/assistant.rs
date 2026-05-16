@@ -7,6 +7,102 @@ use crate::db::models::FileRecord;
 
 const SONNET_MODEL: &str = "claude-sonnet-4-6";
 
+#[derive(Debug, Clone)]
+pub struct AssistantContext {
+    pub watch_dirs: Vec<String>,
+    pub total_files: i64,
+    pub organized_files: i64,
+    pub unsorted_count: i64,
+    pub rules_summary: String,
+}
+
+pub fn build_system_prompt(ctx: &AssistantContext) -> String {
+    let watch_dirs_str = if ctx.watch_dirs.is_empty() {
+        "Aucun dossier configuré".to_string()
+    } else {
+        ctx.watch_dirs.join(", ")
+    };
+
+    format!(
+        r#"Tu es un assistant intelligent intégré dans Egestion, une application macOS de gestion automatique de fichiers.
+
+== COMMENT EGESTION FONCTIONNE ==
+- Watcher : surveille les dossiers configurés en temps réel (FSEvents macOS). Chaque nouveau fichier déclenche le pipeline automatiquement.
+- Pipeline : Fichier détecté → Indexation (hash SHA256, métadonnées) → Classification (règles d'abord ; si confiance < 90% → Claude Haiku) → Organisation (déplacement vers ~/Documents/Egestion/<Catégorie>).
+- Règles : conditions (extension, nom contient, source) → dossier cible + tag automatique. Les règles ont priorité absolue sur l'IA si leur confiance ≥ 90%.
+- Classification IA : Claude Haiku classe chaque fichier (photo/video/music/document/archive/code/installer/other) avec un score de confiance. Cache 30 jours par hash SHA256.
+- À valider : fichiers dont la confiance IA est < 50% — attendent validation manuelle dans l'écran « À valider ».
+- Dashboard : historique des déplacements, statistiques, export CSV. Chaque déplacement est annulable.
+
+== CONTEXTE UTILISATEUR ==
+Dossiers surveillés : {watch_dirs}
+Fichiers indexés : {total} total, {organized} organisés
+Fichiers en attente de validation : {unsorted}
+Règles actives : {rules}
+
+== SCHÉMA BASE DE DONNÉES ==
+- files : id, path, name, extension, size_bytes, created_at, modified_at, indexed_at, category, subcategory, confidence, classifier, is_duplicate, is_organized, source_dir
+- tags : id, file_id, tag, source, weight
+- actions : id, file_id, action_type, path_before, path_after, executed_at, undone_at, undoable
+
+Catégories disponibles : photo, video, music, document, archive, code, installer, other
+
+== RÈGLES DE RÉPONSE ==
+1. Si la question demande de trouver/lister des fichiers → répondre UNIQUEMENT avec une requête SQL SQLite valide commençant par SELECT (sans markdown, sans ```sql).
+   La requête sélectionne : id, path, name, extension, size_bytes, hash_sha256, created_at, modified_at, indexed_at, category, subcategory, confidence, classifier, is_duplicate, duplicate_of, is_organized, source_dir depuis la table files.
+2. Sinon → répondre en français en langage naturel, de façon concise et utile."#,
+        watch_dirs = watch_dirs_str,
+        total = ctx.total_files,
+        organized = ctx.organized_files,
+        unsorted = ctx.unsorted_count,
+        rules = ctx.rules_summary,
+    )
+}
+
+pub async fn load_assistant_context(
+    pool: &SqlitePool,
+    watch_dirs: Vec<String>,
+) -> Result<AssistantContext> {
+    let (total_files,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM files")
+        .fetch_one(pool)
+        .await?;
+
+    let (organized_files,): (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM files WHERE is_organized = 1")
+            .fetch_one(pool)
+            .await?;
+
+    let (unsorted_count,): (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM files WHERE (confidence IS NULL OR confidence < 0.5) AND is_organized = 0",
+    )
+    .fetch_one(pool)
+    .await?;
+
+    let rules: Vec<(String, String, String)> = sqlx::query_as(
+        "SELECT name, condition_value, target_dir FROM rules WHERE enabled = 1 LIMIT 5",
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let rules_summary = if rules.is_empty() {
+        "Aucune règle configurée".to_string()
+    } else {
+        let parts: Vec<String> = rules
+            .iter()
+            .map(|(name, cond, target)| format!("{} ({} → {})", name, cond, target))
+            .collect();
+        format!("{} règle(s) : {}", rules.len(), parts.join(", "))
+    };
+
+    Ok(AssistantContext {
+        watch_dirs,
+        total_files,
+        organized_files,
+        unsorted_count,
+        rules_summary,
+    })
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Message {
     pub role: String,
@@ -19,27 +115,12 @@ pub struct AssistantResponse {
     pub text: String,
 }
 
-const SYSTEM_PROMPT: &str = r#"Tu es un assistant de recherche de fichiers pour l'application Egestion.
-
-Schéma de la base de données :
-- files : id, path, name, extension, size_bytes, created_at (timestamp unix), modified_at, indexed_at, category, subcategory, confidence, classifier, is_duplicate, is_organized, source_dir
-- tags : id, file_id, tag, source, weight
-- actions : id, file_id, action_type, path_before, path_after, executed_at, undone_at, undoable
-
-Catégories disponibles : photo, video, music, document, archive, code, installer, other
-
-Règles :
-1. Si la question demande de trouver des fichiers, réponds UNIQUEMENT avec une requête SQL SQLite valide commençant par SELECT. Pas de markdown, pas de ```sql.
-2. Sinon, réponds en français en langage naturel.
-
-La requête SQL doit sélectionner les colonnes : id, path, name, extension, size_bytes, hash_sha256, created_at, modified_at, indexed_at, category, subcategory, confidence, classifier, is_duplicate, duplicate_of, is_organized, source_dir
-depuis la table files (avec éventuels JOINs sur tags)."#;
-
 pub async fn ask(
     query: String,
     history: Vec<Message>,
     api_key: &str,
     pool: &SqlitePool,
+    context: AssistantContext,
 ) -> Result<AssistantResponse> {
     if api_key.is_empty() {
         return Err(anyhow!("ANTHROPIC_API_KEY not set"));
@@ -55,7 +136,7 @@ pub async fn ask(
     let body = serde_json::json!({
         "model": SONNET_MODEL,
         "max_tokens": 1024,
-        "system": SYSTEM_PROMPT,
+        "system": build_system_prompt(&context),
         "messages": messages,
     });
 
@@ -109,6 +190,63 @@ mod tests {
         let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
         sqlx::migrate!("./migrations").run(&pool).await.unwrap();
         pool
+    }
+
+    fn make_ctx() -> AssistantContext {
+        AssistantContext {
+            watch_dirs: vec!["~/Desktop".to_string(), "~/Downloads".to_string()],
+            total_files: 127,
+            organized_files: 95,
+            unsorted_count: 8,
+            rules_summary: "2 règles : pdf→Documents, jpg→Photos".to_string(),
+        }
+    }
+
+    #[test]
+    fn test_build_system_prompt_contains_watch_dirs() {
+        let prompt = build_system_prompt(&make_ctx());
+        assert!(prompt.contains("~/Desktop"), "prompt must contain watch dir");
+        assert!(prompt.contains("~/Downloads"), "prompt must contain second watch dir");
+    }
+
+    #[test]
+    fn test_build_system_prompt_contains_stats() {
+        let prompt = build_system_prompt(&make_ctx());
+        assert!(prompt.contains("127"), "total_files");
+        assert!(prompt.contains("95"), "organized_files");
+        assert!(prompt.contains("8"), "unsorted_count");
+    }
+
+    #[test]
+    fn test_build_system_prompt_contains_rules() {
+        let prompt = build_system_prompt(&make_ctx());
+        assert!(prompt.contains("2 règles"), "rules_summary");
+    }
+
+    #[test]
+    fn test_build_system_prompt_empty_dirs() {
+        let ctx = AssistantContext {
+            watch_dirs: vec![],
+            total_files: 0,
+            organized_files: 0,
+            unsorted_count: 0,
+            rules_summary: "Aucune règle".to_string(),
+        };
+        let prompt = build_system_prompt(&ctx);
+        assert!(prompt.contains("Aucun dossier configuré"));
+    }
+
+    #[tokio::test]
+    async fn test_load_assistant_context_empty_db() {
+        let pool = make_db().await;
+        let ctx = load_assistant_context(&pool, vec!["~/Desktop".to_string()])
+            .await
+            .unwrap();
+        assert_eq!(ctx.total_files, 0);
+        assert_eq!(ctx.organized_files, 0);
+        assert_eq!(ctx.unsorted_count, 0);
+        assert_eq!(ctx.watch_dirs, vec!["~/Desktop"]);
+        assert!(ctx.rules_summary.contains("Aucune règle"));
     }
 
     #[tokio::test]
