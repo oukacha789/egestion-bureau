@@ -20,25 +20,29 @@ export function CommandPalette() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Reset state when opening
   useEffect(() => {
     if (isSearchOpen) {
       setQuery('');
       setSelectedIdx(0);
       setActiveCategory(null);
-      search('', undefined);
       setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       setSearchResults([]);
     }
   }, [isSearchOpen]);
 
+  // Reset selection when results change
   useEffect(() => {
     setSelectedIdx(0);
   }, [searchResults.length]);
 
+  // Unified search trigger
   useEffect(() => {
-    search(query, activeCategory ?? undefined);
-  }, [activeCategory]);
+    if (isSearchOpen) {
+      search(query, activeCategory ?? undefined);
+    }
+  }, [query, activeCategory, isSearchOpen]);
 
   const selectedResult: SearchResult | null = searchResults[selectedIdx] ?? null;
 
@@ -105,10 +109,7 @@ export function CommandPalette() {
           <input
             ref={inputRef}
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              search(e.target.value, activeCategory ?? undefined);
-            }}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher un fichier…"
             className="flex-1 bg-transparent text-zinc-100 placeholder-zinc-600 text-sm outline-none"
           />
