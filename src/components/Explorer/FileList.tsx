@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { FileText, Image, Music, Video, Archive, Code, HelpCircle, Download } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { FileRecord } from '../../store';
+import { FileContextMenu } from '../shared/FileContextMenu';
 
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   document: FileText,
@@ -32,8 +33,28 @@ interface Props {
   onSelectFile: (id: string) => void;
 }
 
+interface ContextState { x: number; y: number; file: FileRecord }
+
 export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFile }: Props) {
   const [csvExporting, setCsvExporting] = useState(false);
+  const [ctx, setCtx] = useState<ContextState | null>(null);
+
+  function handleContextMenu(e: React.MouseEvent, file: FileRecord) {
+    e.preventDefault();
+    setCtx({ x: e.clientX, y: e.clientY, file });
+  }
+
+  async function openInFinder(path: string) {
+    try { await invoke('open_in_finder', { path }); } catch (err) { console.error(err); }
+  }
+
+  async function quickLook(path: string) {
+    try { await invoke('open_quick_look', { path }); } catch (err) { console.error(err); }
+  }
+
+  async function copyPath(path: string) {
+    try { await navigator.clipboard.writeText(path); } catch (err) { console.error(err); }
+  }
 
   async function handleExportCsv() {
     setCsvExporting(true);
@@ -67,6 +88,7 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
   );
 
   return (
+    <>
     <div className="flex flex-col h-full border-r border-zinc-800">
       {/* Sort header */}
       <div className="flex border-b border-zinc-800 shrink-0">
@@ -96,6 +118,7 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
               <button
                 key={f.id}
                 onClick={() => onSelectFile(f.id)}
+                onContextMenu={(e) => handleContextMenu(e, f)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors border-b border-zinc-800/50 ${
                   selectedFileId === f.id ? 'bg-zinc-700' : 'hover:bg-zinc-800'
                 }`}
@@ -110,5 +133,19 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
         )}
       </div>
     </div>
+
+    {ctx && (
+      <FileContextMenu
+        x={ctx.x}
+        y={ctx.y}
+        onClose={() => setCtx(null)}
+        items={[
+          { label: 'Afficher dans le Finder', onClick: () => openInFinder(ctx.file.path) },
+          { label: 'Aperçu rapide',           onClick: () => quickLook(ctx.file.path) },
+          { label: 'Copier le chemin',        onClick: () => copyPath(ctx.file.path), separator: true },
+        ]}
+      />
+    )}
+    </>
   );
 }

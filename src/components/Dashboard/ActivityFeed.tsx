@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Undo2, FileText, Image, Music, Video, Archive, HelpCircle, Mail } from 'lucide-react';
 import { useAppStore } from '../../store';
 import type { ActivityItem } from '../../store';
+import { FileContextMenu } from '../shared/FileContextMenu';
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   document: <FileText size={14} className="text-blue-400" />,
@@ -21,6 +23,8 @@ function formatRelative(ts: number): string {
 }
 
 function ActivityRow({ item }: { item: ActivityItem }) {
+  const [ctx, setCtx] = useState<{ x: number; y: number } | null>(null);
+
   const handleUndo = async () => {
     try {
       await invoke('perform_undo', { actionId: item.action_id });
@@ -32,11 +36,22 @@ function ActivityRow({ item }: { item: ActivityItem }) {
     }
   };
 
+  async function openInFinder(path: string) {
+    try { await invoke('open_in_finder', { path }); } catch (err) { console.error(err); }
+  }
+
+  async function copyPath(path: string) {
+    try { await navigator.clipboard.writeText(path); } catch (err) { console.error(err); }
+  }
+
   const icon = CATEGORY_ICONS[item.category] ?? <HelpCircle size={14} className="text-zinc-200" />;
   const destFolder = item.path_after.split('/').slice(-2).join('/');
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-bx-800/60 group transition-colors">
+    <div
+      className="flex items-center gap-3 px-4 py-2.5 hover:bg-bx-800/60 group transition-colors relative"
+      onContextMenu={(e) => { e.preventDefault(); setCtx({ x: e.clientX, y: e.clientY }); }}
+    >
       <div className="w-7 h-7 rounded-md bg-bx-800 flex items-center justify-center flex-shrink-0">
         {icon}
       </div>
@@ -54,6 +69,19 @@ function ActivityRow({ item }: { item: ActivityItem }) {
         <Undo2 size={11} />
         annuler
       </button>
+
+      {ctx && (
+        <FileContextMenu
+          x={ctx.x}
+          y={ctx.y}
+          onClose={() => setCtx(null)}
+          items={[
+            { label: 'Afficher dans le Finder', onClick: () => openInFinder(item.path_after) },
+            { label: 'Copier le chemin',        onClick: () => copyPath(item.path_after), separator: true },
+            { label: 'Annuler l\'action',       onClick: handleUndo, separator: true },
+          ]}
+        />
+      )}
     </div>
   );
 }

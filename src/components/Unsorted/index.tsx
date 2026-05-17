@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { Check, X } from 'lucide-react';
+import { FileContextMenu } from '../shared/FileContextMenu';
 
 interface FileRecord {
   id: string;
@@ -22,9 +23,12 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+interface ContextState { x: number; y: number; path: string }
+
 export function Unsorted() {
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ctx, setCtx] = useState<ContextState | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -60,6 +64,14 @@ export function Unsorted() {
     setFiles((prev) => prev.filter((f) => f.id !== fileId));
   };
 
+  async function openInFinder(path: string) {
+    try { await invoke('open_in_finder', { path }); } catch (err) { console.error(err); }
+  }
+
+  async function copyPath(path: string) {
+    try { await navigator.clipboard.writeText(path); } catch (err) { console.error(err); }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -86,7 +98,11 @@ export function Unsorted() {
       </div>
       <div className="flex-1 overflow-auto divide-y divide-zinc-800">
         {files.map((file) => (
-          <div key={file.id} className="px-6 py-4">
+          <div
+            key={file.id}
+            className="px-6 py-4"
+            onContextMenu={(e) => { e.preventDefault(); setCtx({ x: e.clientX, y: e.clientY, path: file.path }); }}
+          >
             <div className="flex items-start justify-between mb-3">
               <div>
                 <p className="text-sm font-medium text-zinc-100">{file.name}</p>
@@ -131,6 +147,18 @@ export function Unsorted() {
           </div>
         ))}
       </div>
+
+      {ctx && (
+        <FileContextMenu
+          x={ctx.x}
+          y={ctx.y}
+          onClose={() => setCtx(null)}
+          items={[
+            { label: 'Afficher dans le Finder', onClick: () => openInFinder(ctx.path) },
+            { label: 'Copier le chemin',        onClick: () => copyPath(ctx.path), separator: true },
+          ]}
+        />
+      )}
     </div>
   );
 }
