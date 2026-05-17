@@ -45,6 +45,7 @@ export function MessageList({ messages }: Props) {
                         score: 0,
                       }}
                       isSelected={false}
+                      query=""
                       onClick={() => {}}
                     />
                   ))}
