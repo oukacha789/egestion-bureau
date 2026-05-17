@@ -1,23 +1,31 @@
-// src/components/Search/CommandPalette.tsx
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Search } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { useSearch } from '../../hooks/useSearch';
 import { SearchResultItem } from './SearchResult';
+import { CategoryChips } from './CategoryChips';
+import { SearchPreview } from './SearchPreview';
+import type { SearchResult } from '../../store';
 
 export function CommandPalette() {
-  const { isSearchOpen, setSearchOpen, searchResults, setSearchResults } = useAppStore();
+  const {
+    isSearchOpen, setSearchOpen,
+    searchResults, setSearchResults,
+    setCurrentView, setSelectedCategory, setSelectedFile,
+  } = useAppStore();
   const { search } = useSearch();
   const [query, setQuery] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isSearchOpen) {
       setQuery('');
       setSelectedIdx(0);
-      search('');
+      setActiveCategory(null);
+      search('', undefined);
       setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       setSearchResults([]);
@@ -28,6 +36,12 @@ export function CommandPalette() {
     setSelectedIdx(0);
   }, [searchResults.length]);
 
+  useEffect(() => {
+    search(query, activeCategory ?? undefined);
+  }, [activeCategory]);
+
+  const selectedResult: SearchResult | null = searchResults[selectedIdx] ?? null;
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') {
       setSearchOpen(false);
@@ -37,8 +51,14 @@ export function CommandPalette() {
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIdx((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter' && searchResults[selectedIdx]) {
-      openFile(searchResults[selectedIdx].path);
+    } else if (e.key === 'Enter' && selectedResult) {
+      if (e.metaKey) {
+        navigateToExplorer(selectedResult);
+      } else if (e.altKey) {
+        copyPath(selectedResult.path);
+      } else {
+        openFile(selectedResult.path);
+      }
     }
   }
 
@@ -51,56 +71,96 @@ export function CommandPalette() {
     }
   }
 
+  function navigateToExplorer(result: SearchResult) {
+    setSearchOpen(false);
+    setCurrentView('explorer');
+    setSelectedCategory(result.category);
+    setSelectedFile(result.id);
+  }
+
+  async function copyPath(path: string) {
+    try {
+      await navigator.clipboard.writeText(path);
+    } catch {
+      // clipboard API may fail silently in Tauri webview
+    }
+    setSearchOpen(false);
+  }
+
   if (!isSearchOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/60 backdrop-blur-sm"
       onClick={() => setSearchOpen(false)}
     >
       <div
-        className="w-[600px] bg-zinc-800 rounded-xl shadow-2xl border border-zinc-700 overflow-hidden"
+        className="w-[760px] bg-zinc-900 rounded-xl shadow-2xl border border-zinc-800 overflow-hidden flex flex-col max-h-[560px]"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
         {/* Input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-700">
-          <Search size={16} className="text-zinc-400 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800 shrink-0">
+          <Search size={15} className="text-zinc-500 shrink-0" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
-              search(e.target.value);
+              search(e.target.value, activeCategory ?? undefined);
             }}
             placeholder="Rechercher un fichier…"
-            className="flex-1 bg-transparent text-zinc-100 placeholder-zinc-500 text-sm outline-none"
+            className="flex-1 bg-transparent text-zinc-100 placeholder-zinc-600 text-sm outline-none"
           />
-          <kbd className="text-xs text-zinc-600 bg-zinc-700 px-1.5 py-0.5 rounded">esc</kbd>
+          <kbd className="text-xs text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded">esc</kbd>
         </div>
 
-        {/* Results */}
-        <div className="max-h-80 overflow-y-auto divide-y divide-zinc-700/50">
-          {searchResults.length === 0 && query.trim() !== '' ? (
-            <div className="px-4 py-8 text-center text-sm text-zinc-500">Aucun résultat</div>
-          ) : (
-            searchResults.map((r, i) => (
-              <SearchResultItem
-                key={r.id}
-                result={r}
-                isSelected={i === selectedIdx}
-                onClick={() => openFile(r.path)}
-              />
-            ))
-          )}
-        </div>
+        {/* Category chips */}
+        <CategoryChips active={activeCategory} onChange={setActiveCategory} />
 
-        {searchResults.length > 0 && (
-          <div className="px-4 py-2 border-t border-zinc-700 flex gap-4 text-xs text-zinc-600">
-            <span>↑↓ naviguer</span>
-            <span>↵ ouvrir dans Finder</span>
+        {/* Body: two columns */}
+        <div className="flex flex-1 overflow-hidden min-h-0">
+          {/* Results list */}
+          <div className="w-[420px] overflow-y-auto border-r border-zinc-800 shrink-0">
+            {searchResults.length === 0 && query.trim() !== '' ? (
+              <div className="px-4 py-10 text-center text-sm text-zinc-600">Aucun résultat</div>
+            ) : (
+              searchResults.map((r, i) => (
+                <SearchResultItem
+                  key={r.id}
+                  result={r}
+                  isSelected={i === selectedIdx}
+                  query={query}
+                  onClick={() => setSelectedIdx(i)}
+                />
+              ))
+            )}
           </div>
-        )}
+
+          {/* Preview panel */}
+          <div className="flex-1 overflow-y-auto bg-zinc-900/50">
+            {selectedResult ? (
+              <SearchPreview
+                result={selectedResult}
+                onOpenFinder={openFile}
+                onNavigateExplorer={navigateToExplorer}
+                onCopyPath={copyPath}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-xs text-zinc-700">
+                Sélectionner un résultat
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-4 py-2 border-t border-zinc-800 flex gap-4 text-[10px] text-zinc-600 shrink-0">
+          <span>↑↓ naviguer</span>
+          <span>↵ Finder</span>
+          <span>⌘↵ Explorer</span>
+          <span>⌥↵ copier chemin</span>
+        </div>
       </div>
     </div>
   );
