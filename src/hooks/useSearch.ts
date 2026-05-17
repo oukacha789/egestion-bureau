@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useAppStore, SearchResult } from '../store';
 
@@ -6,7 +6,7 @@ export function useSearch() {
   const { setSearchResults } = useAppStore();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function search(query: string, category?: string) {
+  const search = useCallback(function search(query: string, category?: string) {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(async () => {
       try {
@@ -21,7 +21,7 @@ export function useSearch() {
         setSearchResults([]);
       }
     }, 200);
-  }
+  }, [setSearchResults]);
 
   useEffect(() => {
     return () => {

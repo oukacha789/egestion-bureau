@@ -42,7 +42,7 @@ export function CommandPalette() {
     if (isSearchOpen) {
       search(query, activeCategory ?? undefined);
     }
-  }, [query, activeCategory, isSearchOpen]);
+  }, [query, activeCategory, isSearchOpen, search]);
 
   const selectedResult: SearchResult | null = searchResults[selectedIdx] ?? null;
 
