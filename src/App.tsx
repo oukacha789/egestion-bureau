@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useAppStore } from './store';
 import { Dashboard } from './components/Dashboard';
 import { Unsorted } from './components/Unsorted';
 import { Explorer } from './components/Explorer';
@@ -14,7 +14,8 @@ import { HelpView } from './components/Help';
 import { UndoToast } from './components/UndoToast';
 
 function App() {
-  const [currentView, setCurrentView] = useState('dashboard');
+  const currentView = useAppStore((s) => s.currentView);
+  const setCurrentView = useAppStore((s) => s.setCurrentView);
   useFileEvents();
   useKeyboard();
 
@@ -24,12 +25,12 @@ function App() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar currentView={currentView} onNavigate={setCurrentView} />
         <main className="flex-1 overflow-hidden">
-          {currentView === 'dashboard' && <Dashboard />}
-          {currentView === 'explorer'  && <Explorer />}
-          {currentView === 'unsorted'  && <Unsorted />}
-          {currentView === 'preferences' && <PreferencesView />}
-          {currentView === 'rules' && <RulesView />}
-          {currentView === 'help'  && <HelpView />}
+          {currentView === 'dashboard'    && <Dashboard />}
+          {currentView === 'explorer'     && <Explorer />}
+          {currentView === 'unsorted'     && <Unsorted />}
+          {currentView === 'preferences'  && <PreferencesView />}
+          {currentView === 'rules'        && <RulesView />}
+          {currentView === 'help'         && <HelpView />}
         </main>
       </div>
       <CommandPalette />

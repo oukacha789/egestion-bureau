@@ -120,6 +120,10 @@ interface AppStore {
   addRule: (rule: RuleRecord) => void;
   removeRule: (id: string) => void;
   updateRule: (rule: RuleRecord) => void;
+
+  // Navigation
+  currentView: string;
+  setCurrentView: (view: string) => void;
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -167,4 +171,7 @@ export const useAppStore = create<AppStore>((set) => ({
   removeRule: (id) => set((s) => ({ rules: s.rules.filter((r) => r.id !== id) })),
   updateRule: (rule) =>
     set((s) => ({ rules: s.rules.map((r) => (r.id === rule.id ? rule : r)) })),
+
+  currentView: 'dashboard',
+  setCurrentView: (view) => set({ currentView: view }),
 }));
