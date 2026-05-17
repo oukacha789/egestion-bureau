@@ -33,7 +33,7 @@ export function CategoryChips({ active, onChange }: Props) {
             className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors shrink-0 ${
               isActive
                 ? 'bg-indigo-600 text-white'
-                : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700'
+                : 'bg-zinc-800 text-zinc-200 hover:text-zinc-200 hover:bg-zinc-700'
             }`}
           >
             {Icon && <Icon size={11} />}

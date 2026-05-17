@@ -46,7 +46,7 @@ export function TagEditor({ fileId }: Props) {
 
   return (
     <div>
-      <div className="text-zinc-500 mb-1.5 text-xs">Tags manuels</div>
+      <div className="text-zinc-300 mb-1.5 text-xs">Tags manuels</div>
       <div className="flex flex-wrap gap-1 mb-2">
         {tags.map((t) => (
           <span
@@ -70,7 +70,7 @@ export function TagEditor({ fileId }: Props) {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           placeholder="Ajouter un tag…"
-          className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-indigo-500"
+          className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-indigo-500"
         />
         <button
           onClick={handleAdd}

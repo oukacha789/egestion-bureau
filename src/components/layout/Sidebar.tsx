@@ -32,31 +32,31 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
           </div>
           <div>
             <p className="text-[13px] font-bold text-zinc-100 leading-tight tracking-tight">Egestion</p>
-            <p className="text-[9px] text-zinc-600">v0.1.0</p>
+            <p className="text-[9px] text-zinc-400">v0.1.0</p>
           </div>
         </div>
       </div>
 
       {/* ── Carte statut ───────────────────────────────────────── */}
       <div className="mx-2 mb-3 bg-[#2a0f1a] border border-bx-800 rounded-lg p-2.5">
-        <p className="text-[8px] font-semibold uppercase tracking-[1.5px] text-zinc-600 mb-1.5">
+        <p className="text-[8px] font-semibold uppercase tracking-[1.5px] text-zinc-400 mb-1.5">
           Dossiers surveillés
         </p>
         <div className="flex flex-col gap-1 mb-2">
           {watchedDirs.length > 0 ? (
             watchedDirs.map((dir) => (
-              <div key={dir} className="flex items-center gap-1.5 text-[10px] text-zinc-400">
+              <div key={dir} className="flex items-center gap-1.5 text-[10px] text-zinc-200">
                 <FolderClosed size={10} className="opacity-50 shrink-0" />
                 {dir}
               </div>
             ))
           ) : (
-            <div className="text-[10px] text-zinc-600">—</div>
+            <div className="text-[10px] text-zinc-400">—</div>
           )}
         </div>
         <div className="flex items-center gap-1.5">
           <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isWatching ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
-          <span className={`text-[9px] font-medium ${isWatching ? 'text-emerald-400' : 'text-zinc-600'}`}>
+          <span className={`text-[9px] font-medium ${isWatching ? 'text-emerald-400' : 'text-zinc-400'}`}>
             {isWatching ? 'Surveillance active' : 'Inactive'}
           </span>
         </div>
@@ -83,7 +83,7 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
               className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] transition-colors ${
                 isActive
                   ? 'bg-bx-600 text-zinc-100'
-                  : 'text-zinc-500 hover:text-zinc-200 hover:bg-bx-800'
+                  : 'text-zinc-300 hover:text-zinc-200 hover:bg-bx-800'
               }`}
             >
               <Icon size={13} />
@@ -110,8 +110,8 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
 
       {/* ── Footer ─────────────────────────────────────────────── */}
       <div className="px-3.5 pt-2 border-t border-bx-800 flex items-center justify-between">
-        <p className="text-[10px] text-zinc-700">⌘K chercher</p>
-        <kbd className="text-[9px] text-zinc-700 bg-bx-800 border border-bx-700 rounded px-1.5 py-0.5">K</kbd>
+        <p className="text-[10px] text-zinc-500">⌘K chercher</p>
+        <kbd className="text-[9px] text-zinc-500 bg-bx-800 border border-bx-700 rounded px-1.5 py-0.5">K</kbd>
       </div>
 
     </div>

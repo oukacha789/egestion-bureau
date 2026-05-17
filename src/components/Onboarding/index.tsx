@@ -95,7 +95,7 @@ export function OnboardingScreen() {
         <Check size={28} className="text-emerald-400" />
         <div>
           <p className="text-sm font-semibold text-zinc-100 mb-1">Egestion est configuré !</p>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-zinc-300">
             Utilisez la barre latérale pour explorer vos fichiers.
           </p>
         </div>
@@ -114,7 +114,7 @@ export function OnboardingScreen() {
             <h1 className="text-sm font-semibold text-zinc-100">Analyse terminée</h1>
           </div>
           {analysis?.file_summary && (
-            <p className="text-xs text-zinc-500">{analysis.file_summary}</p>
+            <p className="text-xs text-zinc-300">{analysis.file_summary}</p>
           )}
         </div>
 
@@ -122,7 +122,7 @@ export function OnboardingScreen() {
           {rules.length > 0 ? (
             <>
               <div>
-                <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-600 mb-3">
+                <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-400 mb-3">
                   Règles suggérées pour votre profil
                 </p>
                 <div className="flex flex-col gap-2">
@@ -140,7 +140,7 @@ export function OnboardingScreen() {
                       >
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-zinc-200 truncate">{rule.label}</p>
-                          <p className="text-xs text-zinc-600">
+                          <p className="text-xs text-zinc-400">
                             .{rule.condition_value} → {rule.target_dir}
                           </p>
                         </div>
@@ -158,7 +158,7 @@ export function OnboardingScreen() {
                               onClick={() =>
                                 setDismissedIndices((prev) => new Set([...prev, i]))
                               }
-                              className="p-1 text-zinc-600 hover:text-zinc-400"
+                              className="p-1 text-zinc-400 hover:text-zinc-200"
                             >
                               <X size={13} />
                             </button>
@@ -180,7 +180,7 @@ export function OnboardingScreen() {
                 </button>
                 <button
                   onClick={() => setPhase('done')}
-                  className="px-4 py-2 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                  className="px-4 py-2 text-xs text-zinc-300 hover:text-zinc-300 transition-colors"
                 >
                   Commencer sans règles
                 </button>
@@ -188,12 +188,12 @@ export function OnboardingScreen() {
             </>
           ) : (
             <div className="flex flex-col items-center justify-center flex-1 gap-4 text-center">
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-zinc-200">
                 {analysis?.file_summary
                   ? 'Aucune règle suggérée pour ces fichiers.'
                   : 'Analyse indisponible — configurez une clé API Anthropic dans les Préférences.'}
               </p>
-              <p className="text-xs text-zinc-600">
+              <p className="text-xs text-zinc-400">
                 Vous pouvez créer des règles manuellement dans l'onglet Règles.
               </p>
               <button
@@ -218,7 +218,7 @@ export function OnboardingScreen() {
           <p className="text-sm font-semibold text-zinc-100 mb-1">
             Analyse de vos fichiers en cours…
           </p>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-zinc-300">
             Claude examine vos types de fichiers pour personnaliser Egestion.
           </p>
         </div>
@@ -235,12 +235,12 @@ export function OnboardingScreen() {
           <p className="text-sm font-semibold text-zinc-100 mb-1">
             Egestion surveille votre dossier…
           </p>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-zinc-300">
             Les fichiers seront détectés et classés automatiquement.
           </p>
         </div>
         {addedDir && (
-          <p className="text-[10px] text-zinc-600 font-mono truncate max-w-xs">{addedDir}</p>
+          <p className="text-[10px] text-zinc-400 font-mono truncate max-w-xs">{addedDir}</p>
         )}
       </div>
     );
@@ -256,7 +256,7 @@ export function OnboardingScreen() {
           </div>
           <div>
             <p className="text-sm font-semibold text-zinc-100 mb-1">Aucun fichier indexé</p>
-            <p className="text-xs text-zinc-500 leading-relaxed">
+            <p className="text-xs text-zinc-300 leading-relaxed">
               Ajoute un dossier à surveiller
               <br />
               pour commencer.
@@ -275,7 +275,7 @@ export function OnboardingScreen() {
         <div className="w-px bg-zinc-800 self-stretch" />
 
         <div className="flex-1 flex flex-col justify-center gap-3">
-          <p className="text-[10px] font-medium tracking-widest uppercase text-zinc-600 mb-1">
+          <p className="text-[10px] font-medium tracking-widest uppercase text-zinc-400 mb-1">
             Ce que tu pourras faire
           </p>
           {[
@@ -286,7 +286,7 @@ export function OnboardingScreen() {
           ].map(({ icon, label }) => (
             <div key={label} className="flex items-center gap-3">
               <span className="text-base">{icon}</span>
-              <span className="text-xs text-zinc-400">{label}</span>
+              <span className="text-xs text-zinc-200">{label}</span>
             </div>
           ))}
         </div>

@@ -32,7 +32,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
     }
   };
 
-  const icon = CATEGORY_ICONS[item.category] ?? <HelpCircle size={14} className="text-zinc-400" />;
+  const icon = CATEGORY_ICONS[item.category] ?? <HelpCircle size={14} className="text-zinc-200" />;
   const destFolder = item.path_after.split('/').slice(-2).join('/');
 
   return (
@@ -42,14 +42,14 @@ function ActivityRow({ item }: { item: ActivityItem }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm text-zinc-100 truncate font-medium">{item.name}</p>
-        <p className="text-xs text-zinc-500 truncate">→ {destFolder}</p>
+        <p className="text-xs text-zinc-300 truncate">→ {destFolder}</p>
       </div>
-      <span className="text-[10px] text-zinc-500 flex-shrink-0 mr-1">
+      <span className="text-[10px] text-zinc-300 flex-shrink-0 mr-1">
         {formatRelative(item.timestamp)}
       </span>
       <button
         onClick={handleUndo}
-        className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-100 px-2 py-1 rounded hover:bg-bx-600"
+        className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-xs text-zinc-200 hover:text-zinc-100 px-2 py-1 rounded hover:bg-bx-600"
       >
         <Undo2 size={11} />
         annuler
@@ -64,7 +64,7 @@ export function ActivityFeed({ limit }: { limit?: number } = {}) {
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-zinc-600">
+      <div className="flex flex-col items-center justify-center py-12 text-zinc-400">
         <p className="text-sm">Aucune activité récente</p>
         <p className="text-xs mt-1">Les fichiers organisés apparaîtront ici</p>
       </div>

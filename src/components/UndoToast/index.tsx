@@ -74,7 +74,7 @@ export function UndoToast() {
     <div className="fixed bottom-5 right-5 z-50 bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl overflow-hidden min-w-[260px] max-w-xs">
       <div className="flex items-center gap-3 px-4 py-3">
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] text-zinc-500 mb-0.5 uppercase tracking-wider">
+          <p className="text-[10px] text-zinc-300 mb-0.5 uppercase tracking-wider">
             {isBatch ? 'Fichiers organisés' : 'Fichier organisé'}
           </p>
           <p className="text-sm text-zinc-100 font-medium truncate">{message}</p>
@@ -88,7 +88,7 @@ export function UndoToast() {
         </button>
         <button
           onClick={dismiss}
-          className="text-zinc-500 hover:text-zinc-300 transition-colors flex-shrink-0"
+          className="text-zinc-300 hover:text-zinc-300 transition-colors flex-shrink-0"
           aria-label="Fermer"
         >
           <X size={14} />

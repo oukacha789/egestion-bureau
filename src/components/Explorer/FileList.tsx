@@ -59,7 +59,7 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
     <button
       onClick={() => onSortChange(col)}
       className={`px-3 py-2 text-left text-xs transition-colors hover:text-zinc-200 ${
-        sort === col ? 'text-zinc-100 font-medium' : 'text-zinc-500'
+        sort === col ? 'text-zinc-100 font-medium' : 'text-zinc-300'
       }`}
     >
       {label} {sort === col && '↓'}
@@ -77,7 +77,7 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
         <button
           onClick={handleExportCsv}
           disabled={csvExporting}
-          className="px-3 py-2 text-xs text-zinc-500 hover:text-zinc-200 flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-2 text-xs text-zinc-300 hover:text-zinc-200 flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Exporter en CSV"
         >
           <Download size={12} />
@@ -88,7 +88,7 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
       {/* File list */}
       <div className="flex-1 overflow-y-auto">
         {files.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-zinc-600">Aucun fichier</div>
+          <div className="px-4 py-8 text-center text-sm text-zinc-400">Aucun fichier</div>
         ) : (
           files.map((f) => {
             const Icon = ICONS[f.category ?? 'other'] ?? FileText;
@@ -100,10 +100,10 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
                   selectedFileId === f.id ? 'bg-zinc-700' : 'hover:bg-zinc-800'
                 }`}
               >
-                <Icon size={14} className="text-zinc-500 shrink-0" />
+                <Icon size={14} className="text-zinc-300 shrink-0" />
                 <span className="flex-1 text-sm text-zinc-200 truncate">{f.name}</span>
-                <span className="text-xs text-zinc-600 shrink-0 w-24 text-right">{formatDate(f.modified_at)}</span>
-                <span className="text-xs text-zinc-600 shrink-0 w-16 text-right">{formatBytes(f.size_bytes)}</span>
+                <span className="text-xs text-zinc-400 shrink-0 w-24 text-right">{formatDate(f.modified_at)}</span>
+                <span className="text-xs text-zinc-400 shrink-0 w-16 text-right">{formatBytes(f.size_bytes)}</span>
               </button>
             );
           })

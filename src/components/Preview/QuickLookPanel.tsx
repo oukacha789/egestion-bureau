@@ -15,7 +15,7 @@ function QuickLookButton({ path }: { path: string }) {
   return (
     <button
       onClick={handleClick}
-      className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-100 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
+      className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-zinc-200 hover:text-zinc-100 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
     >
       <Eye size={11} />
       Aperçu rapide
@@ -79,7 +79,7 @@ export function QuickLookPanel({ path }: Props) {
     return (
       <>
         <div className="mt-3 h-48 overflow-auto bg-zinc-900/50 rounded-lg border border-zinc-800 p-2">
-          <pre className="text-xs text-zinc-400 whitespace-pre-wrap font-mono leading-relaxed">
+          <pre className="text-xs text-zinc-200 whitespace-pre-wrap font-mono leading-relaxed">
             {textContent}
           </pre>
         </div>
@@ -92,8 +92,8 @@ export function QuickLookPanel({ path }: Props) {
 
   return (
     <div className="mt-3 flex flex-col items-center justify-center gap-3 bg-zinc-900/30 rounded-lg border border-zinc-800 py-6">
-      <FileQuestion size={20} className="text-zinc-600" />
-      <span className="text-xs text-zinc-600">Pas d'aperçu disponible</span>
+      <FileQuestion size={20} className="text-zinc-400" />
+      <span className="text-xs text-zinc-400">Pas d'aperçu disponible</span>
       <QuickLookButton path={path} />
     </div>
   );

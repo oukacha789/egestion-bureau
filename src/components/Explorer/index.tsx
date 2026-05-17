@@ -80,7 +80,7 @@ export function Explorer() {
     <div className="flex h-full">
       {/* Category sidebar */}
       <div className="w-44 shrink-0 border-r border-zinc-800 py-4 flex flex-col gap-1 px-2">
-        <div className="px-2 pb-2 text-xs font-medium text-zinc-500 uppercase tracking-wider">
+        <div className="px-2 pb-2 text-xs font-medium text-zinc-300 uppercase tracking-wider">
           Catégories
         </div>
         {CATEGORIES.map(({ id, label, Icon }) => (
@@ -90,7 +90,7 @@ export function Explorer() {
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
               selectedCategory === id
                 ? 'bg-zinc-700 text-zinc-100'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
+                : 'text-zinc-200 hover:text-zinc-200 hover:bg-zinc-800'
             }`}
           >
             <Icon size={14} />

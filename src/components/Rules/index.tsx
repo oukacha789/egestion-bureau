@@ -115,7 +115,7 @@ export function RulesView() {
         <div className="flex items-center gap-2">
           <SlidersHorizontal size={15} className="text-amber-400" />
           <h1 className="text-sm font-semibold text-zinc-100">Règles d'organisation</h1>
-          <span className="text-xs text-zinc-600">— appliquées avant l'organiseur</span>
+          <span className="text-xs text-zinc-400">— appliquées avant l'organiseur</span>
         </div>
         <button
           onClick={() => setCreating(true)}
@@ -131,9 +131,9 @@ export function RulesView() {
       {rules.length === 0 && !creating && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <SlidersHorizontal size={28} className="text-zinc-700 mx-auto mb-3" />
-            <p className="text-sm text-zinc-500">Aucune règle configurée.</p>
-            <p className="text-xs text-zinc-600 mt-1">Crée une règle pour personnaliser l'organisation des fichiers.</p>
+            <SlidersHorizontal size={28} className="text-zinc-500 mx-auto mb-3" />
+            <p className="text-sm text-zinc-300">Aucune règle configurée.</p>
+            <p className="text-xs text-zinc-400 mt-1">Crée une règle pour personnaliser l'organisation des fichiers.</p>
           </div>
         </div>
       )}
@@ -155,10 +155,10 @@ export function RulesView() {
                   placeholder="Nom de la règle"
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                  className="bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-amber-500"
                 />
                 <div className="flex gap-2 items-center">
-                  <span className="text-[10px] text-zinc-500 shrink-0 w-4">Si</span>
+                  <span className="text-[10px] text-zinc-300 shrink-0 w-4">Si</span>
                   <select
                     value={editForm.condition_type}
                     onChange={(e) => setEditForm({ ...editForm, condition_type: e.target.value })}
@@ -172,31 +172,31 @@ export function RulesView() {
                     placeholder={CONDITION_PLACEHOLDERS[editForm.condition_type]}
                     value={editForm.condition_value}
                     onChange={(e) => setEditForm({ ...editForm, condition_value: e.target.value })}
-                    className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                    className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-amber-500"
                   />
                 </div>
                 <div className="flex gap-2 items-center">
-                  <span className="text-[10px] text-zinc-500 shrink-0 w-4">→</span>
+                  <span className="text-[10px] text-zinc-300 shrink-0 w-4">→</span>
                   <input
                     placeholder="Dossier cible"
                     value={editForm.target_dir}
                     onChange={(e) => setEditForm({ ...editForm, target_dir: e.target.value })}
-                    className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 font-mono focus:outline-none focus:border-amber-500"
+                    className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-400 font-mono focus:outline-none focus:border-amber-500"
                   />
                 </div>
                 <div className="flex gap-2 items-center">
-                  <span className="text-[10px] text-zinc-500 shrink-0 w-4">#</span>
+                  <span className="text-[10px] text-zinc-300 shrink-0 w-4">#</span>
                   <input
                     placeholder="Tag automatique (optionnel)"
                     value={editForm.auto_tag}
                     onChange={(e) => setEditForm({ ...editForm, auto_tag: e.target.value })}
-                    className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                    className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-amber-500"
                   />
                 </div>
                 <div className="flex gap-2 justify-end mt-1">
                   <button
                     onClick={() => { setEditingId(null); setEditForm({ name: '', condition_type: 'extension', condition_value: '', target_dir: '', auto_tag: '' }); }}
-                    className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+                    className="px-3 py-1.5 text-xs text-zinc-200 hover:text-zinc-200 transition-colors"
                   >
                     Annuler
                   </button>
@@ -227,13 +227,13 @@ export function RulesView() {
               />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-zinc-200 truncate">{rule.name}</p>
-                <p className="text-[10px] text-zinc-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                <p className="text-[10px] text-zinc-300 mt-0.5 flex items-center gap-1.5 flex-wrap">
                   <span className="bg-indigo-900/50 text-indigo-300 px-1.5 py-0.5 rounded">
                     {CONDITION_TYPES.find((c) => c.value === rule.condition_type)?.label}{' '}
                     "{rule.condition_value}"
                   </span>
                   <span>→</span>
-                  <span className="text-zinc-400 font-mono truncate">{rule.target_dir}</span>
+                  <span className="text-zinc-200 font-mono truncate">{rule.target_dir}</span>
                   {rule.auto_tag && (
                     <span className="bg-emerald-900/30 text-emerald-400 px-1.5 py-0.5 rounded">
                       #{rule.auto_tag}
@@ -246,7 +246,7 @@ export function RulesView() {
                   onClick={() => handleEdit(rule)}
                   disabled={editingId !== null || creating}
                   title="Modifier"
-                  className="p-1.5 text-zinc-500 hover:text-amber-400 hover:bg-amber-900/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  className="p-1.5 text-zinc-300 hover:text-amber-400 hover:bg-amber-900/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
                 >
                   <Pencil size={11} />
                 </button>
@@ -254,7 +254,7 @@ export function RulesView() {
                   onClick={() => handleToggle(rule.id)}
                   disabled={editingId !== null}
                   title={rule.enabled ? 'Désactiver' : 'Activer'}
-                  className="p-1.5 text-zinc-500 hover:text-zinc-200 hover:bg-bx-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  className="p-1.5 text-zinc-300 hover:text-zinc-200 hover:bg-bx-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
                 >
                   {rule.enabled ? <Pause size={11} /> : <Play size={11} />}
                 </button>
@@ -262,7 +262,7 @@ export function RulesView() {
                   onClick={() => handleDelete(rule.id)}
                   disabled={editingId !== null}
                   title="Supprimer"
-                  className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-900/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  className="p-1.5 text-zinc-300 hover:text-rose-400 hover:bg-rose-900/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
                 >
                   <Trash2 size={11} />
                 </button>
@@ -283,10 +283,10 @@ export function RulesView() {
               placeholder="Nom de la règle (ex : Fichiers Figma)"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+              className="bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-amber-500"
             />
             <div className="flex gap-2 items-center">
-              <span className="text-[10px] text-zinc-500 shrink-0 w-4">Si</span>
+              <span className="text-[10px] text-zinc-300 shrink-0 w-4">Si</span>
               <select
                 value={form.condition_type}
                 onChange={(e) => setForm({ ...form, condition_type: e.target.value })}
@@ -300,25 +300,25 @@ export function RulesView() {
                 placeholder={CONDITION_PLACEHOLDERS[form.condition_type]}
                 value={form.condition_value}
                 onChange={(e) => setForm({ ...form, condition_value: e.target.value })}
-                className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-amber-500"
               />
             </div>
             <div className="flex gap-2 items-center">
-              <span className="text-[10px] text-zinc-500 shrink-0 w-4">→</span>
+              <span className="text-[10px] text-zinc-300 shrink-0 w-4">→</span>
               <input
                 placeholder="Dossier cible (ex : ~/Documents/Finance)"
                 value={form.target_dir}
                 onChange={(e) => setForm({ ...form, target_dir: e.target.value })}
-                className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 font-mono focus:outline-none focus:border-amber-500"
+                className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-400 font-mono focus:outline-none focus:border-amber-500"
               />
             </div>
             <div className="flex gap-2 items-center">
-              <span className="text-[10px] text-zinc-500 shrink-0 w-4">#</span>
+              <span className="text-[10px] text-zinc-300 shrink-0 w-4">#</span>
               <input
                 placeholder="Tag automatique (optionnel)"
                 value={form.auto_tag}
                 onChange={(e) => setForm({ ...form, auto_tag: e.target.value })}
-                className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                className="flex-1 bg-bx-800 border border-bx-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-amber-500"
               />
             </div>
             <div className="flex gap-2 justify-end mt-1">
@@ -327,7 +327,7 @@ export function RulesView() {
                   setCreating(false);
                   setForm({ name: '', condition_type: 'extension', condition_value: '', target_dir: '', auto_tag: '' });
                 }}
-                className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+                className="px-3 py-1.5 text-xs text-zinc-200 hover:text-zinc-200 transition-colors"
               >
                 Annuler
               </button>

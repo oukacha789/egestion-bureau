@@ -74,11 +74,11 @@ export function AssistantOverlay() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700 shrink-0">
           <span className="text-sm font-medium text-zinc-200">Assistant Egestion</span>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500">⌘J</span>
+            <span className="text-xs text-zinc-300">⌘J</span>
             <button
               onClick={close}
               aria-label="Fermer l'assistant"
-              className="p-1 text-zinc-500 hover:text-zinc-200 transition-colors"
+              className="p-1 text-zinc-300 hover:text-zinc-200 transition-colors"
             >
               <X size={16} />
             </button>
@@ -87,7 +87,7 @@ export function AssistantOverlay() {
 
         <MessageList messages={messages} />
         {loading && (
-          <div className="px-4 pb-2 text-xs text-zinc-500 animate-pulse">Recherche en cours…</div>
+          <div className="px-4 pb-2 text-xs text-zinc-300 animate-pulse">Recherche en cours…</div>
         )}
         <div ref={bottomRef} />
 

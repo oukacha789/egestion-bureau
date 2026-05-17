@@ -28,7 +28,7 @@ interface Props {
 
 export function SearchPreview({ result, onOpenFinder, onNavigateExplorer, onCopyPath }: Props) {
   const Icon = ICONS[result.category] ?? FileText;
-  const colorClass = CATEGORY_COLORS[result.category] ?? 'text-zinc-400 bg-zinc-800';
+  const colorClass = CATEGORY_COLORS[result.category] ?? 'text-zinc-200 bg-zinc-800';
 
   return (
     <div className="flex flex-col h-full px-5 py-4 gap-4">
@@ -40,15 +40,15 @@ export function SearchPreview({ result, onOpenFinder, onNavigateExplorer, onCopy
         <div className="min-w-0">
           <p className="text-sm font-medium text-zinc-100 break-all leading-snug">{result.name}</p>
           {result.subcategory && (
-            <p className="text-xs text-zinc-500 mt-0.5">{result.subcategory}</p>
+            <p className="text-xs text-zinc-300 mt-0.5">{result.subcategory}</p>
           )}
         </div>
       </div>
 
       {/* Chemin */}
       <div className="flex items-start gap-2">
-        <FolderOpen size={13} className="text-zinc-600 shrink-0 mt-0.5" />
-        <p className="text-xs text-zinc-500 break-all leading-relaxed">{result.path}</p>
+        <FolderOpen size={13} className="text-zinc-400 shrink-0 mt-0.5" />
+        <p className="text-xs text-zinc-300 break-all leading-relaxed">{result.path}</p>
       </div>
 
       {/* Catégorie + année */}
@@ -57,7 +57,7 @@ export function SearchPreview({ result, onOpenFinder, onNavigateExplorer, onCopy
           {result.category}
         </span>
         {result.year > 0 && (
-          <span className="text-[10px] text-zinc-600 bg-zinc-800 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full">
             {result.year}
           </span>
         )}
@@ -67,7 +67,7 @@ export function SearchPreview({ result, onOpenFinder, onNavigateExplorer, onCopy
       {result.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {result.tags.map((tag) => (
-            <span key={tag} className="text-[10px] text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full">
+            <span key={tag} className="text-[10px] text-zinc-200 bg-zinc-800 px-2 py-0.5 rounded-full">
               {tag}
             </span>
           ))}
@@ -84,21 +84,21 @@ export function SearchPreview({ result, onOpenFinder, onNavigateExplorer, onCopy
           className="w-full flex items-center justify-between px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs text-zinc-300 transition-colors"
         >
           <span>Ouvrir dans Finder</span>
-          <kbd className="text-zinc-500 bg-zinc-700 px-1.5 py-0.5 rounded text-[10px]">↵</kbd>
+          <kbd className="text-zinc-300 bg-zinc-700 px-1.5 py-0.5 rounded text-[10px]">↵</kbd>
         </button>
         <button
           onClick={() => onNavigateExplorer(result)}
           className="w-full flex items-center justify-between px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs text-zinc-300 transition-colors"
         >
           <span>Voir dans Explorer</span>
-          <kbd className="text-zinc-500 bg-zinc-700 px-1.5 py-0.5 rounded text-[10px]">⌘↵</kbd>
+          <kbd className="text-zinc-300 bg-zinc-700 px-1.5 py-0.5 rounded text-[10px]">⌘↵</kbd>
         </button>
         <button
           onClick={() => onCopyPath(result.path)}
           className="w-full flex items-center justify-between px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs text-zinc-300 transition-colors"
         >
           <span>Copier le chemin</span>
-          <kbd className="text-zinc-500 bg-zinc-700 px-1.5 py-0.5 rounded text-[10px]">⌥↵</kbd>
+          <kbd className="text-zinc-300 bg-zinc-700 px-1.5 py-0.5 rounded text-[10px]">⌥↵</kbd>
         </button>
       </div>
     </div>

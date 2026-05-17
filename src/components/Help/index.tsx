@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Send, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { FileRecord } from '../../store';
 
 const FAQ_ITEMS = [
@@ -55,7 +56,7 @@ export function HelpView() {
 
         {/* FAQ questions */}
         <section>
-          <p className="text-[10px] tracking-widest uppercase text-zinc-600 font-medium mb-3">
+          <p className="text-[10px] tracking-widest uppercase text-zinc-400 font-medium mb-3">
             Questions fréquentes
           </p>
           <div className="flex flex-col gap-1.5">
@@ -75,25 +76,44 @@ export function HelpView() {
         {/* Answer area */}
         {(loading || answer || error) && (
           <section>
-            <p className="text-[10px] tracking-widest uppercase text-zinc-600 font-medium mb-3">
+            <p className="text-[10px] tracking-widest uppercase text-zinc-400 font-medium mb-3">
               Réponse
             </p>
             <div className="bg-bx-900 border border-bx-800 rounded-xl px-4 py-3 text-xs text-zinc-300 leading-relaxed min-h-[80px]">
               {loading && (
-                <div className="flex items-center gap-2 text-zinc-500">
+                <div className="flex items-center gap-2 text-zinc-300">
                   <Loader2 size={13} className="animate-spin" />
                   Chargement…
                 </div>
               )}
               {!loading && error && <span className="text-rose-400">{error}</span>}
-              {!loading && answer && <span className="whitespace-pre-wrap">{answer}</span>}
+              {!loading && answer && (
+                <ReactMarkdown
+                  components={{
+                    h1: ({ children }) => <h1 className="text-sm font-semibold text-zinc-100 mt-3 mb-1">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-xs font-semibold text-zinc-200 mt-3 mb-1">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-xs font-medium text-zinc-300 mt-2 mb-1">{children}</h3>,
+                    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                    strong: ({ children }) => <strong className="font-semibold text-zinc-100">{children}</strong>,
+                    em: ({ children }) => <em className="italic text-zinc-200">{children}</em>,
+                    ul: ({ children }) => <ul className="list-disc list-inside space-y-0.5 mb-2">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal list-inside space-y-0.5 mb-2">{children}</ol>,
+                    li: ({ children }) => <li className="text-zinc-300">{children}</li>,
+                    code: ({ children }) => <code className="bg-zinc-800 text-indigo-300 px-1 py-0.5 rounded text-[10px] font-mono">{children}</code>,
+                    pre: ({ children }) => <pre className="bg-zinc-800 rounded-lg p-3 overflow-x-auto mb-2 text-[10px] font-mono">{children}</pre>,
+                    blockquote: ({ children }) => <blockquote className="border-l-2 border-zinc-600 pl-3 text-zinc-200 italic mb-2">{children}</blockquote>,
+                  }}
+                >
+                  {answer}
+                </ReactMarkdown>
+              )}
             </div>
           </section>
         )}
 
         {/* Custom question */}
         <section>
-          <p className="text-[10px] tracking-widest uppercase text-zinc-600 font-medium mb-3">
+          <p className="text-[10px] tracking-widest uppercase text-zinc-400 font-medium mb-3">
             Poser une question
           </p>
           <div className="flex gap-2">
@@ -108,7 +128,7 @@ export function HelpView() {
                 }
               }}
               placeholder="Comment puis-je vous aider ?"
-              className="flex-1 bg-bx-900 border border-bx-800 rounded-lg px-3 py-2 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-bx-600"
+              className="flex-1 bg-bx-900 border border-bx-800 rounded-lg px-3 py-2 text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-bx-600"
             />
             <button
               onClick={() => {

@@ -105,15 +105,15 @@ export function CommandPalette() {
       >
         {/* Input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800 shrink-0">
-          <Search size={15} className="text-zinc-500 shrink-0" />
+          <Search size={15} className="text-zinc-300 shrink-0" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher un fichier…"
-            className="flex-1 bg-transparent text-zinc-100 placeholder-zinc-600 text-sm outline-none"
+            className="flex-1 bg-transparent text-zinc-100 placeholder-zinc-400 text-sm outline-none"
           />
-          <kbd className="text-xs text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded">esc</kbd>
+          <kbd className="text-xs text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded">esc</kbd>
         </div>
 
         {/* Category chips */}
@@ -124,7 +124,7 @@ export function CommandPalette() {
           {/* Results list */}
           <div className="w-[420px] overflow-y-auto border-r border-zinc-800 shrink-0">
             {searchResults.length === 0 && query.trim() !== '' ? (
-              <div className="px-4 py-10 text-center text-sm text-zinc-600">Aucun résultat</div>
+              <div className="px-4 py-10 text-center text-sm text-zinc-400">Aucun résultat</div>
             ) : (
               searchResults.map((r, i) => (
                 <SearchResultItem
@@ -148,7 +148,7 @@ export function CommandPalette() {
                 onCopyPath={copyPath}
               />
             ) : (
-              <div className="flex items-center justify-center h-full text-xs text-zinc-700">
+              <div className="flex items-center justify-center h-full text-xs text-zinc-500">
                 Sélectionner un résultat
               </div>
             )}
@@ -156,7 +156,7 @@ export function CommandPalette() {
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2 border-t border-zinc-800 flex gap-4 text-[10px] text-zinc-600 shrink-0">
+        <div className="px-4 py-2 border-t border-zinc-800 flex gap-4 text-[10px] text-zinc-400 shrink-0">
           <span>↑↓ naviguer</span>
           <span>↵ Finder</span>
           <span>⌘↵ Explorer</span>

@@ -8,7 +8,7 @@ interface Props {
 export function MessageList({ messages }: Props) {
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center text-zinc-600 text-sm">
+      <div className="flex-1 flex items-center justify-center text-zinc-400 text-sm">
         Posez une question sur vos fichiers…
       </div>
     );

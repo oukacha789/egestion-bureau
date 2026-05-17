@@ -25,7 +25,7 @@ interface Props {
 export function MetadataPanel({ metadata }: Props) {
   if (!metadata) {
     return (
-      <div className="w-64 flex items-center justify-center text-sm text-zinc-600 border-l border-zinc-800">
+      <div className="w-64 flex items-center justify-center text-sm text-zinc-400 border-l border-zinc-800">
         Sélectionner un fichier
       </div>
     );
@@ -57,7 +57,7 @@ export function MetadataPanel({ metadata }: Props) {
         <Row label="Classifié par" value={metadata.classifier ?? '—'} />
         {confidence != null && (
           <div>
-            <div className="text-zinc-500 mb-1">Confiance</div>
+            <div className="text-zinc-300 mb-1">Confiance</div>
             <div className="flex items-center gap-2">
               <div className="flex-1 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
                 <div
@@ -65,13 +65,13 @@ export function MetadataPanel({ metadata }: Props) {
                   style={{ width: `${confidence}%` }}
                 />
               </div>
-              <span className="text-zinc-400 tabular-nums">{confidence}%</span>
+              <span className="text-zinc-200 tabular-nums">{confidence}%</span>
             </div>
           </div>
         )}
         {metadata.tags.length > 0 && (
           <div>
-            <div className="text-zinc-500 mb-1.5">Tags</div>
+            <div className="text-zinc-300 mb-1.5">Tags</div>
             <div className="flex flex-wrap gap-1">
               {metadata.tags.map((t, i) => (
                 <span key={`${t}-${i}`} className="px-1.5 py-0.5 bg-zinc-700 rounded text-zinc-300">
@@ -101,7 +101,7 @@ export function MetadataPanel({ metadata }: Props) {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <span className="text-zinc-500">{label} : </span>
+      <span className="text-zinc-300">{label} : </span>
       <span className="text-zinc-300">{value}</span>
     </div>
   );
