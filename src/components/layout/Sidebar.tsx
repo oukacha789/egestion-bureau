@@ -45,15 +45,19 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
       {/* ── Logo ───────────────────────────────────────────────── */}
       <div className="px-3.5 pb-4">
         <div className="flex items-center gap-2.5">
-          <button
-            onClick={() => setAboutOpen(true)}
-            title="À propos d'eGestion"
-            className="w-7 h-7 bg-gradient-to-br from-bx-600 to-bx-800 rounded-lg flex items-center justify-center text-[13px] font-bold text-zinc-100 shrink-0 select-none hover:from-bx-500 hover:to-bx-700 transition-all cursor-pointer"
-          >
+          <div className="w-7 h-7 bg-gradient-to-br from-bx-600 to-bx-800 rounded-lg flex items-center justify-center text-[13px] font-bold text-zinc-100 shrink-0 select-none">
             E
-          </button>
+          </div>
           <div>
-            <p className="text-[13px] font-bold text-zinc-100 leading-tight tracking-tight">Egestion</p>
+            <div className="flex items-baseline gap-1.5">
+              <p className="text-[13px] font-bold text-zinc-100 leading-tight tracking-tight">Egestion</p>
+              <button
+                onClick={() => setAboutOpen(true)}
+                className="text-[9px] text-zinc-400 hover:text-zinc-200 transition-colors leading-none"
+              >
+                À propos
+              </button>
+            </div>
             <p className="text-[9px] text-zinc-400">v0.1.0</p>
           </div>
         </div>
