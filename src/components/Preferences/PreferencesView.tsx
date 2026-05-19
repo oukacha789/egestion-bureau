@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { FolderOpen, Plus, Trash2, Eye, Cpu, KeyRound } from 'lucide-react';
+import { useAppStore } from '../../store';
 
 export function PreferencesView() {
   const [dirs, setDirs] = useState<string[]>([]);
@@ -35,6 +36,7 @@ export function PreferencesView() {
     try {
       const updated = await invoke<string[]>('add_watch_dir', { dir: selected });
       setDirs(updated);
+      useAppStore.getState().setWatchedDirs(updated);
       showFeedback('Dossier ajouté et surveillance active');
     } catch (err) {
       console.error('add_watch_dir error:', err);
@@ -48,6 +50,7 @@ export function PreferencesView() {
     try {
       const updated = await invoke<string[]>('remove_watch_dir', { dir });
       setDirs(updated);
+      useAppStore.getState().setWatchedDirs(updated);
       showFeedback('Dossier retiré de la surveillance');
     } catch (err) {
       console.error('remove_watch_dir error:', err);
