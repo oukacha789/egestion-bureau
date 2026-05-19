@@ -124,7 +124,10 @@ export function Unsorted() {
   }
 
   async function trashFile(path: string) {
-    try { await invoke('trash_file', { path }); } catch (err) { console.error(err); }
+    try {
+      await invoke('trash_file', { path });
+      setFiles((prev) => prev.filter((f) => f.path !== path));
+    } catch (err) { console.error(err); }
   }
 
   async function moveFile(path: string) {
