@@ -5,6 +5,7 @@ import { Undo2, FileText, Image, Music, Video, Archive, HelpCircle, Mail } from 
 import { useAppStore } from '../../store';
 import type { ActivityItem } from '../../store';
 import { FileContextMenu } from '../shared/FileContextMenu';
+import { formatRelative } from '../../utils/formatRelative';
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   document: <FileText size={14} className="text-blue-400" />,
@@ -15,13 +16,6 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   email:    <Mail    size={14} className="text-cyan-400" />,
 };
 
-function formatRelative(ts: number): string {
-  const diffSec = Math.max(0, Math.floor(Date.now() / 1000) - ts);
-  if (diffSec < 60)  return 'à l\'instant';
-  if (diffSec < 3600) return `il y a ${Math.floor(diffSec / 60)} min`;
-  if (diffSec < 86400) return `il y a ${Math.floor(diffSec / 3600)} h`;
-  return `il y a ${Math.floor(diffSec / 86400)} j`;
-}
 
 function ActivityRow({ item, focused = false, dataIdx, onClick }: {
   item: ActivityItem;
@@ -116,6 +110,17 @@ export function ActivityFeed({ limit }: { limit?: number } = {}) {
   const items = limit ? activity.slice(0, limit) : activity;
   const [focusedIdx, setFocusedIdx] = useState<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  // Load historical activity from DB on first mount
+  useEffect(() => {
+    invoke<ActivityItem[]>('get_recent_activity', { limit: 50 })
+      .then((dbItems) => {
+        useAppStore.setState((s) => ({
+          activity: s.activity.length === 0 ? dbItems.slice(0, 50) : s.activity,
+        }));
+      })
+      .catch(console.error);
+  }, []);
 
   function scrollToIdx(idx: number) {
     const el = listRef.current?.querySelector(`[data-activity-idx="${idx}"]`);

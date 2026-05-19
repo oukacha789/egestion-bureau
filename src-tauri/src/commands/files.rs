@@ -1,4 +1,4 @@
-use crate::db::models::{ActionRecord, FileRecord};
+use crate::db::models::FileRecord;
 use crate::engine::organizer::undo_action;
 use crate::engine::search::SearchResult;
 use crate::engine::watcher::default_watch_dirs;
@@ -6,6 +6,17 @@ use std::sync::Arc;
 use tauri::State;
 
 use crate::AppState;
+
+#[derive(Debug, serde::Serialize, sqlx::FromRow)]
+pub struct ActivityEntry {
+    pub action_id: String,
+    pub file_id: String,
+    pub name: String,
+    pub path_before: String,
+    pub path_after: String,
+    pub category: String,
+    pub timestamp: i64,
+}
 
 #[derive(Debug, serde::Serialize)]
 pub struct FileMetadata {
@@ -26,10 +37,22 @@ pub struct FileMetadata {
 pub async fn get_recent_activity(
     limit: Option<i64>,
     state: State<'_, AppState>,
-) -> Result<Vec<ActionRecord>, String> {
+) -> Result<Vec<ActivityEntry>, String> {
     let limit = limit.unwrap_or(20);
-    sqlx::query_as::<_, ActionRecord>(
-        "SELECT id, file_id, action_type, path_before, path_after, executed_at, undone_at, undoable FROM actions WHERE undone_at IS NULL ORDER BY executed_at DESC LIMIT ?"
+    sqlx::query_as::<_, ActivityEntry>(
+        r#"SELECT
+            a.id                              AS action_id,
+            COALESCE(a.file_id, '')           AS file_id,
+            COALESCE(f.name, 'Unknown')       AS name,
+            COALESCE(a.path_before, '')       AS path_before,
+            COALESCE(a.path_after, '')        AS path_after,
+            COALESCE(f.category, 'document') AS category,
+            a.executed_at                     AS timestamp
+        FROM actions a
+        LEFT JOIN files f ON f.id = a.file_id
+        WHERE a.undone_at IS NULL
+        ORDER BY a.executed_at DESC
+        LIMIT ?"#,
     )
     .bind(limit)
     .fetch_all(&state.pool)
