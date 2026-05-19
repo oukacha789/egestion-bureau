@@ -26,7 +26,7 @@ export function useFileEvents() {
         path_before: event.payload.path_before,
         path_after: event.payload.path_after,
         category: event.payload.category,
-        timestamp: Date.now(),
+        timestamp: Math.floor(Date.now() / 1000),
       });
 
       invoke<{ total_files: number; organized_files: number; duplicate_files: number; email_files: number }>('get_stats')
