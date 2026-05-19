@@ -28,11 +28,11 @@ pub async fn check_for_update(app: AppHandle) -> Result<UpdateInfo, String> {
 #[tauri::command]
 pub async fn install_update(app: AppHandle) -> Result<(), String> {
     let updater = app.updater().map_err(|e| e.to_string())?;
-    if let Some(update) = updater.check().await.map_err(|e| e.to_string())? {
-        update
+    match updater.check().await.map_err(|e| e.to_string())? {
+        Some(update) => update
             .download_and_install(|_chunk, _total| {}, || {})
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| e.to_string()),
+        None => Err("No update available".to_string()),
     }
-    Ok(())
 }
