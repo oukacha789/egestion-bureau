@@ -12,6 +12,7 @@ import { PreferencesView } from './components/Preferences/PreferencesView';
 import { RulesView } from './components/Rules';
 import { HelpView } from './components/Help';
 import { UndoToast } from './components/UndoToast';
+import { UpdateChecker } from './components/Updater/UpdateChecker';
 
 function App() {
   const currentView = useAppStore((s) => s.currentView);
@@ -37,6 +38,7 @@ function App() {
       <CommandPalette />
       <AssistantOverlay />
       <UndoToast />
+      <UpdateChecker />
     </div>
   );
 }
