@@ -56,6 +56,8 @@ pub fn run() {
             commands::export_history_csv,
             commands::save_history_csv,
             commands::save_report,
+            commands::trash_file,
+            commands::move_file,
             commands::get_watch_dirs,
             commands::get_data_dir,
             commands::get_prefs,

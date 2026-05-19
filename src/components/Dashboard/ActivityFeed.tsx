@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
 import { Undo2, FileText, Image, Music, Video, Archive, HelpCircle, Mail } from 'lucide-react';
 import { useAppStore } from '../../store';
 import type { ActivityItem } from '../../store';
@@ -22,7 +23,12 @@ function formatRelative(ts: number): string {
   return `il y a ${Math.floor(diffSec / 86400)} j`;
 }
 
-function ActivityRow({ item }: { item: ActivityItem }) {
+function ActivityRow({ item, focused = false, dataIdx, onClick }: {
+  item: ActivityItem;
+  focused?: boolean;
+  dataIdx?: number;
+  onClick?: () => void;
+}) {
   const [ctx, setCtx] = useState<{ x: number; y: number } | null>(null);
 
   const handleUndo = async () => {
@@ -44,12 +50,27 @@ function ActivityRow({ item }: { item: ActivityItem }) {
     try { await navigator.clipboard.writeText(path); } catch (err) { console.error(err); }
   }
 
+  async function trashFile(path: string) {
+    try { await invoke('trash_file', { path }); } catch (err) { console.error(err); }
+  }
+
+  async function moveFile(path: string) {
+    try {
+      const dir = await open({ directory: true, title: 'Choisir un dossier de destination' });
+      if (dir) await invoke('move_file', { path, destDir: dir });
+    } catch (err) { console.error(err); }
+  }
+
   const icon = CATEGORY_ICONS[item.category] ?? <HelpCircle size={14} className="text-zinc-200" />;
   const destFolder = item.path_after.split('/').slice(-2).join('/');
 
   return (
     <div
-      className="flex items-center gap-3 px-4 py-2.5 hover:bg-bx-800/60 group transition-colors relative"
+      data-activity-idx={dataIdx}
+      onClick={onClick}
+      className={`flex items-center gap-3 px-4 py-2.5 hover:bg-bx-800/60 group transition-colors relative cursor-default ${
+        focused ? 'bg-bx-800/60 ring-1 ring-inset ring-blue-600/40' : ''
+      }`}
       onContextMenu={(e) => { e.preventDefault(); setCtx({ x: e.clientX, y: e.clientY }); }}
     >
       <div className="w-7 h-7 rounded-md bg-bx-800 flex items-center justify-center flex-shrink-0">
@@ -64,7 +85,9 @@ function ActivityRow({ item }: { item: ActivityItem }) {
       </span>
       <button
         onClick={handleUndo}
-        className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-xs text-zinc-200 hover:text-zinc-100 px-2 py-1 rounded hover:bg-bx-600"
+        className={`transition-opacity flex items-center gap-1 text-xs text-zinc-200 hover:text-zinc-100 px-2 py-1 rounded hover:bg-bx-600 ${
+          focused ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}
       >
         <Undo2 size={11} />
         annuler
@@ -78,6 +101,8 @@ function ActivityRow({ item }: { item: ActivityItem }) {
           items={[
             { label: 'Afficher dans le Finder', onClick: () => openInFinder(item.path_after) },
             { label: 'Copier le chemin',        onClick: () => copyPath(item.path_after), separator: true },
+            { label: 'Déplacer…',              onClick: () => moveFile(item.path_after) },
+            { label: 'Supprimer',              onClick: () => trashFile(item.path_after), danger: true, separator: true },
             { label: 'Annuler l\'action',       onClick: handleUndo, separator: true },
           ]}
         />
@@ -89,6 +114,57 @@ function ActivityRow({ item }: { item: ActivityItem }) {
 export function ActivityFeed({ limit }: { limit?: number } = {}) {
   const activity = useAppStore((s) => s.activity);
   const items = limit ? activity.slice(0, limit) : activity;
+  const [focusedIdx, setFocusedIdx] = useState<number | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  function scrollToIdx(idx: number) {
+    const el = listRef.current?.querySelector(`[data-activity-idx="${idx}"]`);
+    el?.scrollIntoView({ block: 'nearest' });
+  }
+
+  // Keyboard navigation: ↑↓ navigate, Enter open in Finder, U undo, Esc deselect
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (items.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setFocusedIdx((i) => {
+          const next = i === null ? 0 : Math.min(i + 1, items.length - 1);
+          scrollToIdx(next);
+          return next;
+        });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setFocusedIdx((i) => {
+          const prev = i === null ? 0 : Math.max(i - 1, 0);
+          scrollToIdx(prev);
+          return prev;
+        });
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (focusedIdx !== null) {
+          invoke('open_in_finder', { path: items[focusedIdx].path_after }).catch(console.error);
+        }
+      } else if (e.key === 'u' || e.key === 'U') {
+        if (focusedIdx !== null) {
+          e.preventDefault();
+          const item = items[focusedIdx];
+          invoke('perform_undo', { actionId: item.action_id })
+            .then(() => useAppStore.setState((s) => ({
+              activity: s.activity.filter((a) => a.action_id !== item.action_id),
+            })))
+            .catch(console.error);
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setFocusedIdx(null);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [items, focusedIdx]);
 
   if (items.length === 0) {
     return (
@@ -100,9 +176,15 @@ export function ActivityFeed({ limit }: { limit?: number } = {}) {
   }
 
   return (
-    <div className="divide-y divide-bx-800">
-      {items.map((item) => (
-        <ActivityRow key={item.action_id} item={item} />
+    <div ref={listRef} className="divide-y divide-bx-800">
+      {items.map((item, idx) => (
+        <ActivityRow
+          key={item.action_id}
+          item={item}
+          focused={focusedIdx === idx}
+          dataIdx={idx}
+          onClick={() => setFocusedIdx(idx)}
+        />
       ))}
     </div>
   );

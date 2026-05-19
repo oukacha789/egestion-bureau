@@ -33,6 +33,7 @@ function App() {
           {currentView === 'help'         && <HelpView />}
         </main>
       </div>
+      <div className="fixed inset-0 pointer-events-none bg-gradient-to-tl from-bx-900 to-transparent z-[5]" aria-hidden="true" />
       <CommandPalette />
       <AssistantOverlay />
       <UndoToast />

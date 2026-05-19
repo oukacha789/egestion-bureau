@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { Check, X } from 'lucide-react';
+import { open } from '@tauri-apps/plugin-dialog';
+import { Check, X, Mail } from 'lucide-react';
 import { FileContextMenu } from '../shared/FileContextMenu';
 
 interface FileRecord {
@@ -15,7 +16,8 @@ interface FileRecord {
   confidence: number | null;
 }
 
-const CATEGORIES = ['document', 'photo', 'video', 'music', 'archive', 'installer', 'code', 'other'];
+const CATEGORIES = ['document', 'photo', 'video', 'music', 'archive', 'installer', 'code', 'email', 'other'];
+const EMAIL_DEST = '~/Documents/Emails';
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -29,6 +31,8 @@ export function Unsorted() {
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [ctx, setCtx] = useState<ContextState | null>(null);
+  const [focusedIdx, setFocusedIdx] = useState<number>(0);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const load = async () => {
     setLoading(true);
@@ -51,10 +55,18 @@ export function Unsorted() {
     return () => { unlistenPromise.then((fn) => fn()); };
   }, []);
 
-  const validate = async (fileId: string, category: string, subcategory: string | null = null) => {
+  // Clamp focusedIdx when list shrinks
+  useEffect(() => {
+    setFocusedIdx((i) => Math.min(i, Math.max(0, files.length - 1)));
+  }, [files.length]);
+
+  const validate = async (file: FileRecord, category: string, subcategory: string | null = null) => {
     try {
-      await invoke('validate_unsorted_file', { fileId, category, subcategory });
-      setFiles((prev) => prev.filter((f) => f.id !== fileId));
+      await invoke('validate_unsorted_file', { fileId: file.id, category, subcategory });
+      if (category === 'email') {
+        await invoke('move_file', { path: file.path, destDir: EMAIL_DEST });
+      }
+      setFiles((prev) => prev.filter((f) => f.id !== file.id));
     } catch (e) {
       console.error('Validation failed:', e);
     }
@@ -64,12 +76,62 @@ export function Unsorted() {
     setFiles((prev) => prev.filter((f) => f.id !== fileId));
   };
 
+  function scrollToIdx(idx: number) {
+    const el = listRef.current?.querySelector(`[data-unsorted-idx="${idx}"]`);
+    el?.scrollIntoView({ block: 'nearest' });
+  }
+
+  // Keyboard navigation: ↑↓ navigate, Enter accept AI suggestion, Esc dismiss
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (files.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setFocusedIdx((i) => {
+          const next = Math.min(i + 1, files.length - 1);
+          scrollToIdx(next);
+          return next;
+        });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setFocusedIdx((i) => {
+          const prev = Math.max(i - 1, 0);
+          scrollToIdx(prev);
+          return prev;
+        });
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const file = files[focusedIdx];
+        if (file) validate(file, file.category ?? 'other', file.subcategory ?? null);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        const file = files[focusedIdx];
+        if (file) dismiss(file.id);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [files, focusedIdx]);
+
   async function openInFinder(path: string) {
     try { await invoke('open_in_finder', { path }); } catch (err) { console.error(err); }
   }
 
   async function copyPath(path: string) {
     try { await navigator.clipboard.writeText(path); } catch (err) { console.error(err); }
+  }
+
+  async function trashFile(path: string) {
+    try { await invoke('trash_file', { path }); } catch (err) { console.error(err); }
+  }
+
+  async function moveFile(path: string) {
+    try {
+      const dir = await open({ directory: true, title: 'Choisir un dossier de destination' });
+      if (dir) await invoke('move_file', { path, destDir: dir });
+    } catch (err) { console.error(err); }
   }
 
   if (loading) {
@@ -96,11 +158,15 @@ export function Unsorted() {
         <h1 className="text-lg font-semibold text-zinc-100">À valider</h1>
         <p className="text-xs text-zinc-300 mt-0.5">{files.length} fichier(s) en attente</p>
       </div>
-      <div className="flex-1 overflow-auto divide-y divide-zinc-800">
-        {files.map((file) => (
+      <div ref={listRef} className="flex-1 overflow-auto divide-y divide-zinc-800">
+        {files.map((file, fileIdx) => (
           <div
             key={file.id}
-            className="px-6 py-4"
+            data-unsorted-idx={fileIdx}
+            onClick={() => setFocusedIdx(fileIdx)}
+            className={`px-6 py-4 transition-colors cursor-default ${
+              fileIdx === focusedIdx ? 'bg-zinc-800/60 ring-1 ring-inset ring-blue-600/40' : ''
+            }`}
             onContextMenu={(e) => { e.preventDefault(); setCtx({ x: e.clientX, y: e.clientY, path: file.path }); }}
           >
             <div className="flex items-start justify-between mb-3">
@@ -122,9 +188,10 @@ export function Unsorted() {
               <div className="mb-2 flex items-center gap-2">
                 <span className="text-[10px] text-zinc-300">✦ IA suggère :</span>
                 <button
-                  onClick={() => validate(file.id, file.category!, file.subcategory)}
+                  onClick={() => validate(file, file.category!, file.subcategory)}
                   className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition-colors font-medium"
                 >
+                  {file.category === 'email' && <Mail size={11} />}
                   {file.category}
                   {file.subcategory ? ` / ${file.subcategory}` : ''}
                 </button>
@@ -137,9 +204,10 @@ export function Unsorted() {
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => validate(file.id, cat)}
-                  className="px-3 py-1 text-xs rounded-full bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100 transition-colors capitalize"
+                  onClick={() => validate(file, cat)}
+                  className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100 transition-colors capitalize"
                 >
+                  {cat === 'email' && <Mail size={11} />}
                   {cat}
                 </button>
               ))}
@@ -156,6 +224,8 @@ export function Unsorted() {
           items={[
             { label: 'Afficher dans le Finder', onClick: () => openInFinder(ctx.path) },
             { label: 'Copier le chemin',        onClick: () => copyPath(ctx.path), separator: true },
+            { label: 'Déplacer…',              onClick: () => moveFile(ctx.path) },
+            { label: 'Supprimer',              onClick: () => trashFile(ctx.path), danger: true, separator: true },
           ]}
         />
       )}

@@ -276,21 +276,71 @@ pub fn get_watch_dirs() -> Vec<String> {
 }
 
 #[tauri::command]
+pub async fn trash_file(path: String, state: State<'_, AppState>) -> Result<(), String> {
+    // Fetch file_id before deleting (needed for search index cleanup)
+    let row: Option<(String,)> = sqlx::query_as("SELECT id FROM files WHERE path = ?")
+        .bind(&path)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    trash::delete(&path).map_err(|e| e.to_string())?;
+
+    if let Some((file_id,)) = row {
+        sqlx::query("DELETE FROM files WHERE id = ?")
+            .bind(&file_id)
+            .execute(&state.pool)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if let Ok(mut idx) = state.search_index.lock() {
+            let _ = idx.delete_document(&file_id);
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn move_file(path: String, dest_dir: String) -> Result<String, String> {
+    let expanded = if dest_dir.starts_with("~/") {
+        let home = dirs::home_dir().ok_or("Cannot resolve home directory")?;
+        format!("{}/{}", home.display(), &dest_dir[2..])
+    } else {
+        dest_dir
+    };
+    let src = std::path::Path::new(&path);
+    let filename = src.file_name().ok_or_else(|| "Invalid source path".to_string())?;
+    let dest_dir_path = std::path::Path::new(&expanded);
+    std::fs::create_dir_all(dest_dir_path).map_err(|e| e.to_string())?;
+    let dest = dest_dir_path.join(filename);
+    std::fs::rename(src, &dest).map_err(|e| e.to_string())?;
+    Ok(dest.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
 pub fn open_quick_look(path: String) -> Result<(), String> {
     use std::os::unix::process::CommandExt;
 
+    // In debug builds: qlmanage -p for Quick Look (shows [DEBUG] in title — acceptable in dev).
+    // In release builds: `open` hands off to the default macOS app (Preview, TextEdit…)
+    // so the [DEBUG] label never appears to end users.
+    #[cfg(debug_assertions)]
     let ext = std::path::Path::new(&path)
         .extension()
         .and_then(|e| e.to_str())
         .map(|e| e.to_lowercase())
         .unwrap_or_default();
 
-    // Mail QL extension cannot render via qlmanage — open in Mail.app directly
+    #[cfg(debug_assertions)]
     let (bin, args): (&str, Vec<&str>) = if ext == "eml" || ext == "emlx" {
         ("/usr/bin/open", vec![&path])
     } else {
         ("/usr/bin/qlmanage", vec!["-p", &path])
     };
+
+    #[cfg(not(debug_assertions))]
+    let (bin, args): (&str, Vec<&str>) = ("/usr/bin/open", vec![&path]);
 
     std::process::Command::new(bin)
         .args(&args)

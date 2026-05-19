@@ -41,6 +41,7 @@ export function FileContextMenu({ x, y, items, onClose }: Props) {
   return (
     <div
       ref={ref}
+      onMouseDown={(e) => e.stopPropagation()}
       style={{ left, top }}
       className="fixed z-[100] w-[200px] bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl py-1 text-xs"
     >

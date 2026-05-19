@@ -111,6 +111,7 @@ interface AppStore {
   setSelectedCategory: (cat: string) => void;
   setSelectedFile: (id: string | null) => void;
   setExplorerFiles: (files: FileRecord[]) => void;
+  removeExplorerFile: (id: string) => void;
   setFileMetadata: (meta: FileMetadata | null) => void;
   setExplorerSort: (sort: string) => void;
 
@@ -162,6 +163,11 @@ export const useAppStore = create<AppStore>((set) => ({
   setSelectedCategory: (cat) => set({ selectedCategory: cat, selectedFileId: null, fileMetadata: null }),
   setSelectedFile: (id) => set({ selectedFileId: id }),
   setExplorerFiles: (files) => set({ explorerFiles: files }),
+  removeExplorerFile: (id) => set((s) => ({
+    explorerFiles: s.explorerFiles.filter((f) => f.id !== id),
+    selectedFileId: s.selectedFileId === id ? null : s.selectedFileId,
+    fileMetadata: s.selectedFileId === id ? null : s.fileMetadata,
+  })),
   setFileMetadata: (meta) => set({ fileMetadata: meta }),
   setExplorerSort: (sort) => set({ explorerSort: sort }),
 

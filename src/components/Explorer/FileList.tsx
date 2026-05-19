@@ -1,8 +1,9 @@
 // src/components/Explorer/FileList.tsx
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FileText, Image, Music, Video, Archive, Code, HelpCircle, Download } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
-import { FileRecord } from '../../store';
+import { open } from '@tauri-apps/plugin-dialog';
+import { FileRecord, useAppStore } from '../../store';
 import { FileContextMenu } from '../shared/FileContextMenu';
 
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -30,30 +31,103 @@ interface Props {
   sort: string;
   onSortChange: (sort: string) => void;
   selectedFileId: string | null;
-  onSelectFile: (id: string) => void;
+  onSelectFile: (id: string | null) => void;
+  focusZone: 'sidebar' | 'filelist';
+  onFocusZoneChange: (zone: 'sidebar' | 'filelist') => void;
 }
 
 interface ContextState { x: number; y: number; file: FileRecord }
 
-export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFile }: Props) {
+export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFile, focusZone, onFocusZoneChange }: Props) {
+  const removeExplorerFile = useAppStore((s) => s.removeExplorerFile);
   const [csvExporting, setCsvExporting] = useState(false);
   const [ctx, setCtx] = useState<ContextState | null>(null);
+  const contextFileRef = useRef<FileRecord | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  function scrollToFile(id: string) {
+    const el = listRef.current?.querySelector(`[data-file-id="${id}"]`);
+    el?.scrollIntoView({ block: 'nearest' });
+  }
+
+  // Filelist keyboard: ↑↓ navigate, ← back to sidebar, Enter → Finder, Space → QuickLook, Esc → deselect+sidebar
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (focusZone !== 'filelist') return;
+
+      const idx = files.findIndex((f) => f.id === selectedFileId);
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = Math.min(idx + 1, files.length - 1);
+        if (next >= 0) {
+          onSelectFile(files[next].id);
+          scrollToFile(files[next].id);
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = idx <= 0 ? 0 : idx - 1;
+        onSelectFile(files[prev].id);
+        scrollToFile(files[prev].id);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        onFocusZoneChange('sidebar');
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const file = files[idx];
+        if (file) invoke('open_in_finder', { path: file.path }).catch(console.error);
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        const file = files[idx];
+        if (file) invoke('open_quick_look', { path: file.path }).catch(console.error);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        onSelectFile(null);
+        onFocusZoneChange('sidebar');
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [focusZone, files, selectedFileId, onSelectFile, onFocusZoneChange]);
 
   function handleContextMenu(e: React.MouseEvent, file: FileRecord) {
     e.preventDefault();
+    contextFileRef.current = file;
     setCtx({ x: e.clientX, y: e.clientY, file });
   }
 
   async function openInFinder(path: string) {
+    console.log('[ContextMenu] openInFinder:', path);
     try { await invoke('open_in_finder', { path }); } catch (err) { console.error(err); }
   }
 
   async function quickLook(path: string) {
+    console.log('[ContextMenu] quickLook:', path);
     try { await invoke('open_quick_look', { path }); } catch (err) { console.error(err); }
   }
 
   async function copyPath(path: string) {
+    console.log('[ContextMenu] copyPath:', path);
     try { await navigator.clipboard.writeText(path); } catch (err) { console.error(err); }
+  }
+
+  async function trashFile(file: FileRecord) {
+    console.log('[ContextMenu] trashFile:', file.path);
+    try {
+      await invoke('trash_file', { path: file.path });
+      removeExplorerFile(file.id);
+    } catch (err) {
+      console.error('trash_file error:', err);
+    }
+  }
+
+  async function moveFile(path: string) {
+    console.log('[ContextMenu] moveFile:', path);
+    try {
+      const dir = await open({ directory: true, title: 'Choisir un dossier de destination' });
+      if (dir) await invoke('move_file', { path, destDir: dir });
+    } catch (err) { console.error(err); }
   }
 
   async function handleExportCsv() {
@@ -89,7 +163,9 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
 
   return (
     <>
-    <div className="flex flex-col h-full border-r border-zinc-800">
+    <div className={`flex flex-col h-full border-r border-zinc-800 transition-colors ${
+      focusZone === 'filelist' ? 'border-l-2 border-l-blue-600' : ''
+    }`}>
       {/* Sort header */}
       <div className="flex border-b border-zinc-800 shrink-0">
         <SortBtn col="name" label="Nom" />
@@ -108,7 +184,11 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
       </div>
 
       {/* File list */}
-      <div className="flex-1 overflow-y-auto">
+      <div
+        ref={listRef}
+        onClick={() => onFocusZoneChange('filelist')}
+        className="flex-1 overflow-y-auto"
+      >
         {files.length === 0 ? (
           <div className="px-4 py-8 text-center text-sm text-zinc-400">Aucun fichier</div>
         ) : (
@@ -117,7 +197,8 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
             return (
               <button
                 key={f.id}
-                onClick={() => onSelectFile(f.id)}
+                data-file-id={f.id}
+                onClick={() => { onSelectFile(f.id); onFocusZoneChange('filelist'); }}
                 onContextMenu={(e) => handleContextMenu(e, f)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors border-b border-zinc-800/50 ${
                   selectedFileId === f.id ? 'bg-zinc-700' : 'hover:bg-zinc-800'
@@ -140,9 +221,11 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
         y={ctx.y}
         onClose={() => setCtx(null)}
         items={[
-          { label: 'Afficher dans le Finder', onClick: () => openInFinder(ctx.file.path) },
-          { label: 'Aperçu rapide',           onClick: () => quickLook(ctx.file.path) },
-          { label: 'Copier le chemin',        onClick: () => copyPath(ctx.file.path), separator: true },
+          { label: 'Afficher dans le Finder', onClick: () => openInFinder(contextFileRef.current!.path) },
+          { label: 'Aperçu rapide',           onClick: () => quickLook(contextFileRef.current!.path) },
+          { label: 'Copier le chemin',        onClick: () => copyPath(contextFileRef.current!.path), separator: true },
+          { label: 'Déplacer…',              onClick: () => moveFile(contextFileRef.current!.path) },
+          { label: 'Supprimer',              onClick: () => trashFile(contextFileRef.current!), danger: true, separator: true },
         ]}
       />
     )}

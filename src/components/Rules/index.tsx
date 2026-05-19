@@ -33,6 +33,7 @@ export function RulesView() {
     target_dir: '',
     auto_tag: '',
   });
+  const [focusedRuleId, setFocusedRuleId] = useState<string | null>(null);
 
   useEffect(() => {
     invoke<RuleRecord[]>('get_rules')
@@ -78,6 +79,7 @@ export function RulesView() {
 
   function handleEdit(rule: RuleRecord) {
     setEditingId(rule.id);
+    setFocusedRuleId(null);
     setCreating(false);
     setEditForm({
       name: rule.name,
@@ -106,6 +108,47 @@ export function RulesView() {
       console.error('update_rule error:', err);
     }
   }
+
+  // Keyboard navigation: ↑↓ navigate, Enter edit, Space toggle, Del delete, Esc deselect
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      if (editingId !== null || creating) return;
+      if (rules.length === 0) return;
+
+      const idx = focusedRuleId ? rules.findIndex((r) => r.id === focusedRuleId) : -1;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = idx < rules.length - 1 ? idx + 1 : 0;
+        setFocusedRuleId(rules[next].id);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = idx > 0 ? idx - 1 : rules.length - 1;
+        setFocusedRuleId(rules[prev].id);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const rule = rules[idx];
+        if (rule) handleEdit(rule);
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        const rule = rules[idx];
+        if (rule) handleToggle(rule.id);
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        const rule = rules[idx];
+        if (rule) {
+          handleDelete(rule.id);
+          setFocusedRuleId(null);
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setFocusedRuleId(null);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [rules, focusedRuleId, editingId, creating]);
 
   return (
     <div className="flex flex-col h-full p-6 overflow-y-auto">
@@ -214,11 +257,12 @@ export function RulesView() {
             /* ── Mode affichage normal ── */
             <div
               key={rule.id}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors ${
+              onClick={() => setFocusedRuleId(rule.id)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors cursor-default ${
                 rule.enabled
                   ? 'bg-bx-900 border-bx-800'
                   : 'bg-bx-950 border-bx-900 opacity-50'
-              }`}
+              } ${focusedRuleId === rule.id ? 'ring-1 ring-blue-500' : ''}`}
             >
               <div
                 className={`w-2 h-2 rounded-full shrink-0 ${

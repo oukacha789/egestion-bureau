@@ -26,6 +26,7 @@ reqwest = { version = "0.12", features = ["json"] }
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
 dirs = "5"
+trash = "3"
 tantivy = "0.22"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
