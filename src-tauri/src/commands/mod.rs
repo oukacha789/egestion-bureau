@@ -4,6 +4,7 @@ pub mod assistant;
 pub mod export;
 pub mod prefs;
 pub mod rules;
+pub mod updater;
 
 pub use files::*;
 pub use tags::*;
@@ -11,6 +12,7 @@ pub use assistant::*;
 pub use export::*;
 pub use prefs::*;
 pub use rules::*;
+pub use updater::*;
 
 pub fn resolve_api_key(config_key: Option<&str>) -> String {
     config_key

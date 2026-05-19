@@ -73,6 +73,8 @@ pub fn run() {
             commands::delete_rule,
             commands::toggle_rule,
             commands::update_rule,
+            commands::check_for_update,
+            commands::install_update,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
