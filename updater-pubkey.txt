@@ -1,1 +1,2 @@
-dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY5OUNEMTYyQTg3RjQ1RTQKUldUa1JYK29ZdEdjK1lncGpnd1N0WVNESlNRS1FmUUZtaFFHZjQ2UFR5eDJmUUgxMTN5M25mMVYK
+# minisign public key – paste into tauri.conf.json > plugins.updater.pubkey
+RWTkRX+oYtGc+YgpjgwStYSDJSQKQfQFmhQGf46PTyx2fQH113y3nf1V

@@ -24,6 +24,10 @@ dist-ssr
 *.sw?
 .superpowers/
 
+.env
+.env.*
+!.env.example
+
 # Signing secrets — never commit
 .env.signing
 updater-private.key
