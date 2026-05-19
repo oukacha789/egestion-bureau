@@ -4,7 +4,11 @@ set -euo pipefail
 VERSION=$(node -p "require('./package.json').version")
 DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-TARBALL=$(ls src-tauri/target/release/bundle/macos/*.app.tar.gz | head -1)
+TARBALL=$(ls src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app.tar.gz 2>/dev/null | head -1)
+if [[ -z "$TARBALL" ]]; then
+  echo "ERROR: no .app.tar.gz found in universal-apple-darwin bundle" >&2
+  exit 1
+fi
 SIG=$(cat "${TARBALL}.sig")
 FILENAME=$(basename "$TARBALL")
 
