@@ -38,6 +38,19 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "macOS": {
+      "minimumSystemVersion": "10.15",
+      "signingIdentity": null
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "RWTkRX+oYtGc+YgpjgwStYSDJSQKQfQFmhQGf46PTyx2fQH113y3nf1V",
+      "endpoints": [
+        "https://github.com/oukacha789/egestion-bureau/releases/latest/download/latest.json"
+      ],
+      "dialog": true
+    }
   }
 }
