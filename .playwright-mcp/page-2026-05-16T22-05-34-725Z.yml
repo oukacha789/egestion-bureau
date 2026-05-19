@@ -1,0 +1,72 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic:
+      - generic: eGestion
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e9]:
+        - generic [ref=e10]: E
+        - generic [ref=e11]:
+          - paragraph [ref=e12]: Egestion
+          - paragraph [ref=e13]: v0.1.0
+      - generic [ref=e14]:
+        - paragraph [ref=e15]: Dossiers surveillés
+        - generic [ref=e17]: —
+        - generic [ref=e20]: Surveillance active
+      - navigation [ref=e21]:
+        - button "Dashboard" [ref=e22]:
+          - img [ref=e23]
+          - generic [ref=e28]: Dashboard
+        - button "Explorer" [ref=e29]:
+          - img [ref=e30]
+          - generic [ref=e32]: Explorer
+        - button "À valider" [ref=e33]:
+          - img [ref=e34]
+          - generic [ref=e36]: À valider
+        - button "E-mails" [ref=e37]:
+          - img [ref=e38]
+          - generic [ref=e41]: E-mails
+        - button "Règles" [ref=e42]:
+          - img [ref=e43]
+          - generic [ref=e44]: Règles
+        - button "Préférences" [active] [ref=e45]:
+          - img [ref=e46]
+          - generic [ref=e49]: Préférences
+        - button "Aide" [ref=e50]:
+          - img [ref=e51]
+          - generic [ref=e54]: Aide
+      - generic [ref=e55]:
+        - paragraph [ref=e56]: ⌘K chercher
+        - generic [ref=e57]: K
+    - main [ref=e58]:
+      - generic [ref=e108]:
+        - generic [ref=e109]:
+          - heading "Préférences" [level=1] [ref=e110]
+          - paragraph [ref=e111]: Configurez les dossiers surveillés automatiquement par Egestion.
+        - generic [ref=e112]:
+          - generic [ref=e113]:
+            - generic [ref=e114]:
+              - heading "Dossiers surveillés" [level=2] [ref=e115]:
+                - img [ref=e116]
+                - text: Dossiers surveillés
+              - paragraph [ref=e119]: Les nouveaux fichiers déposés dans ces dossiers seront automatiquement classés.
+            - button "Ajouter un dossier" [ref=e120]:
+              - img [ref=e121]
+              - text: Ajouter un dossier
+          - generic [ref=e123]:
+            - img [ref=e124]
+            - paragraph [ref=e126]: Aucun dossier surveillé
+            - paragraph [ref=e127]: Cliquez sur « Ajouter un dossier » pour commencer.
+        - generic [ref=e128]:
+          - generic [ref=e130]:
+            - heading "Intelligence Artificielle" [level=2] [ref=e131]:
+              - img [ref=e132]
+              - text: Intelligence Artificielle
+            - paragraph [ref=e135]:
+              - text: "Clé API Anthropic pour la classification IA et l'assistant. Fallback :"
+              - code [ref=e136]: ANTHROPIC_API_KEY
+          - generic [ref=e138]:
+            - img [ref=e139]
+            - generic [ref=e142]: Non configurée
+            - generic [ref=e144]: Non configurée
+            - button "Configurer" [ref=e145]

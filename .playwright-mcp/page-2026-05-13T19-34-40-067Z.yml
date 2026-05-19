@@ -1,0 +1,59 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - heading "Egestion" [level=1] [ref=e6]
+    - navigation [ref=e7]:
+      - button "Dashboard" [ref=e8]:
+        - img [ref=e9]
+        - text: Dashboard
+      - button "Explorer" [ref=e14]:
+        - img [ref=e15]
+        - text: Explorer
+      - button "À valider" [ref=e17]:
+        - img [ref=e18]
+        - text: À valider
+    - paragraph [ref=e21]: ⌘K pour chercher
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - img [ref=e26]
+          - text: Actif
+        - generic [ref=e28]:
+          - button "Aperçu" [ref=e29]
+          - button "Activité" [ref=e30]
+        - generic [ref=e31]:
+          - button "Rapport" [ref=e32]:
+            - img [ref=e33]
+            - text: Rapport
+          - button "CSV" [ref=e34]:
+            - img [ref=e35]
+            - text: CSV
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - generic [ref=e41]:
+              - text: Total indexés
+              - img [ref=e43]
+            - generic [ref=e47]: "0"
+          - generic [ref=e48]:
+            - generic [ref=e49]:
+              - text: Organisés
+              - img [ref=e51]
+            - generic [ref=e54]: "0"
+          - generic [ref=e55]:
+            - generic [ref=e56]:
+              - text: Doublons
+              - img [ref=e58]
+            - generic [ref=e61]: "0"
+          - generic [ref=e62]:
+            - generic [ref=e63]:
+              - text: Taux d'org.
+              - img [ref=e65]
+            - generic [ref=e68]: 0%
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - text: Activité récente
+            - button "Tout voir →" [ref=e71]
+          - generic [ref=e73]:
+            - paragraph [ref=e74]: Aucune activité récente
+            - paragraph [ref=e75]: Les fichiers organisés apparaîtront ici

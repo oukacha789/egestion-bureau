@@ -1,0 +1,51 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic:
+      - generic: eGestion
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e9]:
+        - generic [ref=e10]: E
+        - generic [ref=e11]:
+          - paragraph [ref=e12]: Egestion
+          - paragraph [ref=e13]: v0.1.0
+      - generic [ref=e14]:
+        - paragraph [ref=e15]: Dossiers surveillés
+        - generic [ref=e17]: —
+        - generic [ref=e20]: Surveillance active
+      - navigation [ref=e21]:
+        - button "Dashboard" [ref=e22]:
+          - img [ref=e23]
+          - generic [ref=e28]: Dashboard
+        - button "Explorer" [ref=e29]:
+          - img [ref=e30]
+          - generic [ref=e32]: Explorer
+        - button "À valider" [ref=e33]:
+          - img [ref=e34]
+          - generic [ref=e36]: À valider
+        - button "E-mails" [ref=e37]:
+          - img [ref=e38]
+          - generic [ref=e41]: E-mails
+        - button "Règles" [active] [ref=e42]:
+          - img [ref=e43]
+          - generic [ref=e44]: Règles
+        - button "Préférences" [ref=e45]:
+          - img [ref=e46]
+          - generic [ref=e49]: Préférences
+      - generic [ref=e50]:
+        - paragraph [ref=e51]: ⌘K chercher
+        - generic [ref=e52]: K
+    - main [ref=e53]:
+      - generic [ref=e79]:
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - img [ref=e82]
+            - heading "Règles d'organisation" [level=1] [ref=e83]
+            - generic [ref=e84]: — appliquées avant l'organiseur
+          - button "Nouvelle règle" [ref=e85]:
+            - img [ref=e86]
+            - text: Nouvelle règle
+        - generic [ref=e88]:
+          - img [ref=e89]
+          - paragraph [ref=e90]: Aucune règle configurée.
+          - paragraph [ref=e91]: Crée une règle pour personnaliser l'organisation des fichiers.

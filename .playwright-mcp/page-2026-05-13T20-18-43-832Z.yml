@@ -1,0 +1,65 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - heading "Egestion" [level=1] [ref=e6]
+    - navigation [ref=e7]:
+      - button "Dashboard" [ref=e8]:
+        - img [ref=e9]
+        - text: Dashboard
+      - button "Explorer" [ref=e14]:
+        - img [ref=e15]
+        - text: Explorer
+      - button "À valider" [ref=e17]:
+        - img [ref=e18]
+        - text: À valider
+    - paragraph [ref=e21]: ⌘K pour chercher
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]: Dashboard
+        - generic [ref=e26]:
+          - button "Rapport" [ref=e27]:
+            - img [ref=e28]
+            - text: Rapport
+          - button "CSV" [disabled] [ref=e29]:
+            - img [ref=e30]
+            - text: CSV
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e36]:
+            - paragraph [ref=e37]: Bonjour 👋
+            - generic [ref=e38]:
+              - img [ref=e39]
+              - generic [ref=e41]: Surveillance active
+              - generic [ref=e42]: ·
+              - generic [ref=e43]: mercredi 13 mai 2026
+          - generic [ref=e46]: 0% organisés · objectif 90%
+        - generic [ref=e47]:
+          - generic [ref=e48]:
+            - generic [ref=e49]:
+              - generic [ref=e50]: Total indexés
+              - img [ref=e52]
+            - generic [ref=e57]: "0"
+            - generic [ref=e58]: fichiers détectés
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - generic [ref=e61]: Organisés
+              - img [ref=e63]
+            - generic [ref=e67]: "0"
+            - generic [ref=e68]: —
+          - generic [ref=e69]:
+            - generic [ref=e70]:
+              - generic [ref=e71]: Doublons
+              - img [ref=e73]
+            - generic [ref=e77]: "0"
+            - generic [ref=e78]: à traiter
+          - generic [ref=e79]:
+            - generic [ref=e80]:
+              - generic [ref=e81]: Taux d'org.
+              - img [ref=e83]
+            - generic [ref=e87]: "0"
+            - generic [ref=e88]: "objectif : 90%"
+        - generic [ref=e89]:
+          - generic [ref=e91]: Activité récente
+          - generic [ref=e93]:
+            - paragraph [ref=e94]: Aucune activité récente
+            - paragraph [ref=e95]: Les fichiers organisés apparaîtront ici
