@@ -32,6 +32,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -46,7 +47,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "RWTkRX+oYtGc+YgpjgwStYSDJSQKQfQFmhQGf46PTyx2fQH113y3nf1V",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY5OUNEMTYyQTg3RjQ1RTQKUldUa1JYK29ZdEdjK1lncGpnd1N0WVNESlNRS1FmUUZtaFFHZjQ2UFR5eDJmUUgxMTN5M25mMVYK",
       "endpoints": [
         "https://github.com/oukacha789/egestion-bureau/releases/latest/download/latest.json"
       ],
