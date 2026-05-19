@@ -16,7 +16,7 @@ export function UpdateChecker() {
     const timer = setTimeout(() => {
       invoke<UpdateInfo>('check_for_update')
         .then((info) => { if (info.available) setUpdate(info); })
-        .catch(() => {});
+        .catch((e) => { console.warn('[Updater] check_for_update failed:', e); });
     }, 3000);
     return () => clearTimeout(timer);
   }, []);
@@ -48,7 +48,7 @@ export function UpdateChecker() {
         </button>
       </div>
       <p className="text-xs text-zinc-400 mb-3">
-        Version {update.version}
+        Version {update.version ?? 'inconnue'}
         {update.body && (
           <span className="block mt-1 text-zinc-300">{update.body}</span>
         )}
