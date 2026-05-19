@@ -23,3 +23,12 @@ dist-ssr
 *.sln
 *.sw?
 .superpowers/
+
+# Signing secrets — never commit
+.env.signing
+updater-private.key
+*.key
+
+# Untracked dev artifacts
+.playwright-mcp/
+*.png
