@@ -50,7 +50,7 @@
       "endpoints": [
         "https://github.com/oukacha789/egestion-bureau/releases/latest/download/latest.json"
       ],
-      "dialog": true
+      "dialog": false
     }
   }
 }
