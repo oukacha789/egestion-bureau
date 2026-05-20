@@ -32,6 +32,7 @@ export function QuickLookPanel({ path }: Props) {
   const ext = getExt(path);
 
   useEffect(() => {
+    if (!(window as any).__TAURI_INTERNALS__) return;
     if (TEXT_EXTS.has(ext)) {
       invoke<string>('read_text_preview', { path })
         .then(setTextContent)

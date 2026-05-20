@@ -113,6 +113,7 @@ export function ActivityFeed({ limit }: { limit?: number } = {}) {
 
   // Load historical activity from DB on first mount
   useEffect(() => {
+    if (!(window as any).__TAURI_INTERNALS__) return;
     invoke<ActivityItem[]>('get_recent_activity', { limit: 50 })
       .then((dbItems) => {
         useAppStore.setState((s) => ({

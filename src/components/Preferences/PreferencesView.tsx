@@ -14,6 +14,7 @@ export function PreferencesView() {
   const [savingKey, setSavingKey] = useState(false);
 
   useEffect(() => {
+    if (!(window as any).__TAURI_INTERNALS__) return;
     invoke<string[]>('get_prefs').then(setDirs).catch(console.error);
     invoke<string>('get_api_key_masked').then(setMaskedKey).catch(console.error);
   }, []);

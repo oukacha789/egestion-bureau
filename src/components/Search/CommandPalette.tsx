@@ -39,6 +39,7 @@ export function CommandPalette() {
 
   // Unified search trigger
   useEffect(() => {
+    if (!(window as any).__TAURI_INTERNALS__) return;
     if (isSearchOpen) {
       search(query, activeCategory ?? undefined);
     }

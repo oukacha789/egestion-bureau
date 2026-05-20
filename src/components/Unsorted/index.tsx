@@ -46,9 +46,13 @@ export function Unsorted() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (!(window as any).__TAURI_INTERNALS__) return;
+    load();
+  }, []);
 
   useEffect(() => {
+    if (!(window as any).__TAURI_INTERNALS__) return;
     const unlistenPromise = listen<{ file_id: string }>('file-organized', (event) => {
       setFiles((prev) => prev.filter((f) => f.id !== event.payload.file_id));
     });

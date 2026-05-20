@@ -36,6 +36,7 @@ export function RulesView() {
   const [focusedRuleId, setFocusedRuleId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!(window as any).__TAURI_INTERNALS__) return;
     invoke<RuleRecord[]>('get_rules')
       .then(setRules)
       .catch(console.error);

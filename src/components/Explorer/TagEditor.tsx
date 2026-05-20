@@ -11,6 +11,7 @@ export function TagEditor({ fileId }: Props) {
   const [input, setInput] = useState('');
 
   useEffect(() => {
+    if (!(window as any).__TAURI_INTERNALS__) return;
     loadTags();
   }, [fileId]);
 
