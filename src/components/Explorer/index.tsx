@@ -34,6 +34,8 @@ export function Explorer() {
 
   // Load files when category or sort changes
   useEffect(() => {
+    if (!(window as any).__TAURI_INTERNALS__) return;
+
     async function loadFiles() {
       try {
         const files = await invoke<FileRecord[]>('get_files_by_category', {
@@ -51,6 +53,7 @@ export function Explorer() {
 
   // Load metadata when file is selected
   useEffect(() => {
+    if (!(window as any).__TAURI_INTERNALS__) return;
     if (!selectedFileId) {
       setFileMetadata(null);
       return;

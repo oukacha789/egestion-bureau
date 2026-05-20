@@ -39,6 +39,8 @@ export function UndoToast() {
   };
 
   useEffect(() => {
+    if (!(window as any).__TAURI_INTERNALS__) return;
+
     type Payload = { action_id: string; name: string; category: string };
     const unlistenPromise = listen<Payload>('file-organized', (event) => {
       const { action_id, name, category } = event.payload;

@@ -13,6 +13,8 @@ export function UpdateChecker() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
+    if (!(window as any).__TAURI_INTERNALS__) return;
+
     const timer = setTimeout(() => {
       invoke<UpdateInfo>('check_for_update')
         .then((info) => { if (info.available) setUpdate(info); })

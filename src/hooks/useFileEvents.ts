@@ -16,6 +16,8 @@ export function useFileEvents() {
   const { addActivity, setStats, setIsWatching, setWatchedDirs } = useAppStore();
 
   useEffect(() => {
+    if (!(window as any).__TAURI_INTERNALS__) return;
+
     setIsWatching(true);
 
     const unlistenPromise = listen<FileOrganizedPayload>('file-organized', (event) => {
