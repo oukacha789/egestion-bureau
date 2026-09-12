@@ -63,7 +63,7 @@ function ActivityRow({ item, focused = false, dataIdx, onClick }: {
       data-activity-idx={dataIdx}
       onClick={onClick}
       className={`flex items-center gap-3 px-4 py-2.5 hover:bg-bx-800/60 group transition-colors relative cursor-default ${
-        focused ? 'bg-bx-800/60 ring-1 ring-inset ring-blue-600/40' : ''
+        focused ? 'bg-bx-800/60 ring-1 ring-inset ring-amber-500/30' : ''
       }`}
       onContextMenu={(e) => { e.preventDefault(); setCtx({ x: e.clientX, y: e.clientY }); }}
     >

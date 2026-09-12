@@ -104,7 +104,7 @@ export function PreferencesView() {
             <button
               onClick={handleAdd}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 rounded-lg text-xs text-white transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-bx-700 hover:bg-bx-600 disabled:opacity-40 rounded-lg text-xs text-zinc-100 transition-colors"
             >
               <Plus size={12} />
               Ajouter un dossier
@@ -131,7 +131,7 @@ export function PreferencesView() {
                   key={dir}
                   className="flex items-center gap-3 px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl group"
                 >
-                  <FolderOpen size={16} className="text-indigo-400 shrink-0" />
+                  <FolderOpen size={16} className="text-amber-400/70 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-zinc-200 truncate">{name}</p>
                     <p className="text-xs text-zinc-400 truncate">{parent}</p>
@@ -178,13 +178,13 @@ export function PreferencesView() {
                   onChange={(e) => setNewKey(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSaveKey()}
                   placeholder="sk-ant-api03-..."
-                  className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-indigo-500"
+                  className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-amber-500/50"
                   autoFocus
                 />
                 <button
                   onClick={handleSaveKey}
                   disabled={savingKey || !newKey.trim()}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 rounded-lg text-xs text-white transition-colors"
+                  className="px-3 py-1.5 bg-bx-700 hover:bg-bx-600 disabled:opacity-40 rounded-lg text-xs text-zinc-100 transition-colors"
                 >
                   {savingKey ? '…' : 'Sauvegarder'}
                 </button>

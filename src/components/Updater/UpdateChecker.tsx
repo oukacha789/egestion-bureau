@@ -59,7 +59,7 @@ export function UpdateChecker() {
         <button
           onClick={handleInstall}
           disabled={installing}
-          className="flex-1 px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg transition-colors"
+          className="flex-1 px-3 py-1.5 text-xs font-medium bg-bx-700 hover:bg-bx-600 disabled:opacity-50 text-zinc-100 rounded-lg transition-colors"
         >
           {installing ? 'Installation…' : 'Installer et relancer'}
         </button>

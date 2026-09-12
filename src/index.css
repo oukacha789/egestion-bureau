@@ -6,6 +6,9 @@
   --color-bx-800: #3D1525;
   --color-bx-700: #4A1525;
   --color-bx-600: #5C1A2A;
+  --color-bx-500: #6E2035;
+  --color-bx-400: #8B3050;
+  --color-bx-300: #AA4868;
 }
 
 @keyframes shrink {

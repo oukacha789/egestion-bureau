@@ -52,12 +52,12 @@ export function TagEditor({ fileId }: Props) {
         {tags.map((t) => (
           <span
             key={t}
-            className="flex items-center gap-1 px-1.5 py-0.5 bg-indigo-900/60 border border-indigo-700/50 rounded text-indigo-200 text-xs"
+            className="flex items-center gap-1 px-1.5 py-0.5 bg-bx-800 border border-bx-700/50 rounded text-zinc-200 text-xs"
           >
             {t}
             <button
               onClick={() => handleRemove(t)}
-              className="text-indigo-400 hover:text-indigo-200 transition-colors"
+              className="text-zinc-400 hover:text-zinc-200 transition-colors"
               aria-label={`Supprimer tag ${t}`}
             >
               <X size={10} />
@@ -71,7 +71,7 @@ export function TagEditor({ fileId }: Props) {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           placeholder="Ajouter un tag…"
-          className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-indigo-500"
+          className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-amber-500/50"
         />
         <button
           onClick={handleAdd}

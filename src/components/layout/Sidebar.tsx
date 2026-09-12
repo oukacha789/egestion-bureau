@@ -58,7 +58,7 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
                 À propos
               </button>
             </div>
-            <p className="text-[9px] text-zinc-400">v0.1.0-beta</p>
+            <p className="text-[9px] text-zinc-400">v0.1.2-beta</p>
           </div>
         </div>
       </div>
@@ -80,7 +80,7 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
               </div>
               <div>
                 <p className="text-sm font-bold text-zinc-100 tracking-tight">eGestion</p>
-                <p className="text-[10px] text-zinc-400 mt-0.5">Version 0.1.0-beta · macOS</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">Version 0.1.2-beta · macOS</p>
                 <p className="text-[9px] text-amber-500/80 mt-0.5">Version bêta — usage personnel uniquement</p>
               </div>
               <button

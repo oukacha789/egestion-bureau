@@ -36,3 +36,5 @@ updater-private.key
 # Untracked dev artifacts
 .playwright-mcp/
 *.png
+.aidesigner/*
+!.aidesigner/.gitkeep

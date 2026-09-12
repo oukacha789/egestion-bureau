@@ -99,7 +99,7 @@ export function HelpView() {
                     ul: ({ children }) => <ul className="list-disc list-inside space-y-0.5 mb-2">{children}</ul>,
                     ol: ({ children }) => <ol className="list-decimal list-inside space-y-0.5 mb-2">{children}</ol>,
                     li: ({ children }) => <li className="text-zinc-300">{children}</li>,
-                    code: ({ children }) => <code className="bg-zinc-800 text-indigo-300 px-1 py-0.5 rounded text-[10px] font-mono">{children}</code>,
+                    code: ({ children }) => <code className="bg-zinc-800 text-amber-300/90 px-1 py-0.5 rounded text-[10px] font-mono">{children}</code>,
                     pre: ({ children }) => <pre className="bg-zinc-800 rounded-lg p-3 overflow-x-auto mb-2 text-[10px] font-mono">{children}</pre>,
                     blockquote: ({ children }) => <blockquote className="border-l-2 border-zinc-600 pl-3 text-zinc-200 italic mb-2">{children}</blockquote>,
                   }}

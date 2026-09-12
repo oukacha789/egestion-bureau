@@ -41,7 +41,7 @@ pub async fn index_file(
         .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs() as i64)
         .unwrap_or(now);
 
-    let duplicate_of = find_duplicate_by_hash(&hash, pool).await?;
+    let duplicate_of = find_duplicate_by_hash(&hash, path, pool).await?;
     let is_duplicate = duplicate_of.is_some();
 
     let record = FileRecord {
@@ -121,11 +121,12 @@ fn compute_sha256(path: &str) -> Result<String> {
     Ok(hex::encode(hasher.finalize()))
 }
 
-async fn find_duplicate_by_hash(hash: &str, pool: &SqlitePool) -> Result<Option<String>> {
+async fn find_duplicate_by_hash(hash: &str, current_path: &str, pool: &SqlitePool) -> Result<Option<String>> {
     let result = sqlx::query_scalar(
-        "SELECT id FROM files WHERE hash_sha256 = ? AND is_duplicate = 0 LIMIT 1",
+        "SELECT id FROM files WHERE hash_sha256 = ? AND is_duplicate = 0 AND path != ? LIMIT 1",
     )
     .bind(hash)
+    .bind(current_path)
     .fetch_optional(pool)
     .await?;
     Ok(result)
@@ -173,6 +174,23 @@ mod tests {
 
         assert!(record2.is_duplicate);
         assert!(record2.duplicate_of.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_reindex_same_file_not_marked_duplicate() {
+        let pool = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
+        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+        let (tx, _rx) = mpsc::channel(10);
+
+        let mut tmp = NamedTempFile::new().unwrap();
+        tmp.write_all(b"same content").unwrap();
+        let path = tmp.path().to_str().unwrap().to_string();
+
+        index_file(&path, "desktop", &pool, &tx).await.unwrap();
+        let record2 = index_file(&path, "desktop", &pool, &tx).await.unwrap();
+
+        assert!(!record2.is_duplicate, "Re-indexing the same file must not mark it as a self-duplicate");
+        assert!(record2.duplicate_of.is_none());
     }
 
     #[test]

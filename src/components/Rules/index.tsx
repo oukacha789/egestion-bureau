@@ -263,7 +263,7 @@ export function RulesView() {
                 rule.enabled
                   ? 'bg-bx-900 border-bx-800'
                   : 'bg-bx-950 border-bx-900 opacity-50'
-              } ${focusedRuleId === rule.id ? 'ring-1 ring-blue-500' : ''}`}
+              } ${focusedRuleId === rule.id ? 'ring-1 ring-amber-500/30' : ''}`}
             >
               <div
                 className={`w-2 h-2 rounded-full shrink-0 ${
@@ -273,7 +273,7 @@ export function RulesView() {
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-zinc-200 truncate">{rule.name}</p>
                 <p className="text-[10px] text-zinc-300 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                  <span className="bg-indigo-900/50 text-indigo-300 px-1.5 py-0.5 rounded">
+                  <span className="bg-bx-800 text-zinc-300 px-1.5 py-0.5 rounded">
                     {CONDITION_TYPES.find((c) => c.value === rule.condition_type)?.label}{' '}
                     "{rule.condition_value}"
                   </span>

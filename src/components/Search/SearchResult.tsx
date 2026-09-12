@@ -49,7 +49,7 @@ export function SearchResultItem({ result, isSelected, query, onClick }: Props) 
         isSelected ? 'bg-zinc-800' : 'hover:bg-zinc-800/60'
       }`}
     >
-      <Icon size={15} className={isSelected ? 'text-indigo-400' : 'text-zinc-300'} />
+      <Icon size={15} className={isSelected ? 'text-amber-400' : 'text-zinc-300'} />
       <div className="flex-1 min-w-0">
         <div className="text-xs text-zinc-300 truncate">
           {highlightText(result.name, query)}

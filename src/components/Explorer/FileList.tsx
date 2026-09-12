@@ -163,11 +163,11 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
 
   return (
     <>
-    <div className={`flex flex-col h-full border-r border-zinc-800 transition-colors ${
-      focusZone === 'filelist' ? 'border-l-2 border-l-blue-600' : ''
+    <div className={`flex flex-col h-full border-r border-bx-800 transition-colors ${
+      focusZone === 'filelist' ? 'border-l-2 border-l-amber-500/60' : ''
     }`}>
       {/* Sort header */}
-      <div className="flex border-b border-zinc-800 shrink-0">
+      <div className="flex border-b border-bx-800 shrink-0">
         <SortBtn col="name" label="Nom" />
         <div className="flex-1" />
         <SortBtn col="date" label="Date" />
@@ -200,8 +200,8 @@ export function FileList({ files, sort, onSortChange, selectedFileId, onSelectFi
                 data-file-id={f.id}
                 onClick={() => { onSelectFile(f.id); onFocusZoneChange('filelist'); }}
                 onContextMenu={(e) => handleContextMenu(e, f)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors border-b border-zinc-800/50 ${
-                  selectedFileId === f.id ? 'bg-zinc-700' : 'hover:bg-zinc-800'
+                className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors border-b border-bx-800/50 ${
+                  selectedFileId === f.id ? 'bg-bx-700/80' : 'hover:bg-bx-800'
                 }`}
               >
                 <Icon size={14} className="text-zinc-300 shrink-0" />

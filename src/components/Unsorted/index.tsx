@@ -161,18 +161,18 @@ export function Unsorted() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-5 border-b border-zinc-800">
+      <div className="px-6 py-5 border-b border-bx-800">
         <h1 className="text-lg font-semibold text-zinc-100">À valider</h1>
         <p className="text-xs text-zinc-300 mt-0.5">{files.length} fichier(s) en attente</p>
       </div>
-      <div ref={listRef} className="flex-1 overflow-auto divide-y divide-zinc-800">
+      <div ref={listRef} className="flex-1 overflow-auto divide-y divide-bx-800">
         {files.map((file, fileIdx) => (
           <div
             key={file.id}
             data-unsorted-idx={fileIdx}
             onClick={() => setFocusedIdx(fileIdx)}
             className={`px-6 py-4 transition-colors cursor-default ${
-              fileIdx === focusedIdx ? 'bg-zinc-800/60 ring-1 ring-inset ring-blue-600/40' : ''
+              fileIdx === focusedIdx ? 'bg-bx-800/60 ring-1 ring-inset ring-amber-500/30' : ''
             }`}
             onContextMenu={(e) => { e.preventDefault(); setCtx({ x: e.clientX, y: e.clientY, path: file.path }); }}
           >
