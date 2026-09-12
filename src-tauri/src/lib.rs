@@ -127,6 +127,7 @@ pub fn run() {
                 crate::commands::resolve_api_key(cfg.api_key.as_deref())
             };
             let throttle = Arc::new(Mutex::new(ThrottleState::new()));
+            let reprocess_pool = pool.clone();
             tauri::async_runtime::spawn(start_pipeline(app_handle, pool, api_key, search_index, watcher, event_tx.clone(), event_rx, throttle));
 
             // Scan files already present in watched dirs so rules apply to pre-existing files.
@@ -149,6 +150,30 @@ pub fn run() {
                                 },
                             )).await;
                         }
+                    }
+                }
+            });
+
+            // Re-apply rules to files already in the DB that are unorganized or
+            // stuck in _Unsorted (category = 'other', is_organized = 1). Covers
+            // the case where the user adds a rule after files were already processed.
+            let reprocess_tx = event_tx.clone();
+            tauri::async_runtime::spawn(async move {
+                let files: Vec<(String, String)> = sqlx::query_as(
+                    "SELECT path, COALESCE(source_dir, 'unknown') FROM files \
+                     WHERE is_organized = 0 \
+                        OR (category = 'other' AND is_organized = 1) \
+                     LIMIT 500"
+                )
+                .fetch_all(&reprocess_pool)
+                .await
+                .unwrap_or_default();
+
+                for (path, source_dir) in files {
+                    if std::path::Path::new(&path).exists() {
+                        let _ = reprocess_tx.send(AppEvent::FileDetected(
+                            crate::events::FileDetectedPayload { path, source_dir },
+                        )).await;
                     }
                 }
             });
